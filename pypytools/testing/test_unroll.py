@@ -1,14 +1,14 @@
-from pypytools.unroll import unroll, patch_closure
+from pypytools.unroll import unroll, Closure
 
-def test_patch_closure():
-    x = 123
+def test_make_closure():
     def foo():
         return x
-    assert foo() == 123
-    #
-    foo2 = patch_closure(foo, [42])
-    assert foo2() == 42
 
+    cl = Closure(foo, x=42)
+    foo2 = cl.make()
+    assert foo2() == 42
+    
+    
 
 
 def test_inject_value():

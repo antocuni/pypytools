@@ -9,74 +9,47 @@ def d(node):
     print
     print codegen.to_source(node)
 
+class Closure(object):
+
+    def __init__(self, fn, **extravars):
+        self.fn = fn
+        self.extravars = extravars
+        makesrc = self._create_src()
+        self.tree = ast.parse(makesrc)
+
+    def _create_src(self):
+        freevars = self.extravars.keys()
+        innersrc = py.code.Source(self.fn)
+        lines = [
+            'def make(%s):' % ', '.join(freevars),
+            str(innersrc.indent()),
+            '    return %s' % self.fn.__name__
+            ]
+        return '\n'.join(lines)
+
+    def make(self):
+        tree = ast.fix_missing_locations(self.tree)
+        d = {}
+        co = compile(tree, self.fn.__code__.co_filename, 'exec')
+        exec co in d
+        make = d['make']
+        return make(**self.extravars)
+
+
+def fake_unroll(**kwargs):
+    def identity(fn):
+        return fn
+    return identity
+
+
 class unroll(object):
 
     def __init__(self, **extravars):
         self.extravars = extravars
+        # we need to specify a fake unroll, to ignore the existing @unroll
+        # decorator in the fn source code
+        self.extravars['unroll'] = fake_unroll
 
     def __call__(self, fn):
-        # we use py.code.Source because it automatically deindent the code, if
-        # needed
-        src = str(py.code.Source(fn))
-        src = '#' + src # comment out the @unroll decorator, XXX
-        node = ast.parse(src)
-        #
-        freevars = self.extravars.keys()
-        funcdef = node.body[0]
-        assert isinstance(funcdef, ast.FunctionDef)
-        node.body[0] = inject_freevars(funcdef, freevars)
-        ## node = Unroller(freevars).visit(node)
-        node = ast.fix_missing_locations(node)
-        #
-        mydict = {}
-        exec compile(node, fn.__module__, 'exec') in mydict
-        make_fn = mydict['make_' + fn.__name__]
-        new_fn = make_fn()
-        new_fn = patch_closure(new_fn, self.extravars.values())
-        return new_fn
-
-
-def patch_closure(fn, freevals):
-    def make_cell(value):
-        # http://nedbatchelder.com/blog/201301/byterun_and_making_cells.html
-        return (lambda x: lambda: x)(value).func_closure[0]
-
-    cells = tuple([make_cell(val) for val in freevals])
-    return types.FunctionType(fn.__code__, fn.__globals__, fn.__name__,
-                              fn.__defaults__, cells)
-
-    
-
-def inject_freevars(funcdef, freevars):
-    """
-    functiondef is an ast node representing a function like this::
-    
-        def foo(a, b):
-            ...
-
-    it returns an ast node like this:
-
-        def make_foo():
-            x = None
-            y = None
-            def foo(a, b):
-                ...
-            return foo()
-    """
-    def make_assign(name):
-        return ast.Assign(
-            targets = [ast.Name(id=name, ctx=ast.Store())],
-            value = ast.Name(id='None', ctx=ast.Load()))
-    
-    outerdef = ast.FunctionDef(
-        name = 'make_'+funcdef.name,
-        args = ast.arguments(args=[], vararg=None, kwarg=None, defaults=[]),
-        decorator_list=[],
-        body = [])
-
-    outerdef.body =  [make_assign(name) for name in freevars]
-    outerdef.body += [
-        funcdef,
-        ast.Return(value=ast.Name(id=funcdef.name, ctx=ast.Load())),
-    ]
-    return outerdef
+        closure = Closure(fn, **self.extravars)
+        return closure.make()
