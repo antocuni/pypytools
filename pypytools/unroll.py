@@ -35,10 +35,11 @@ class Closure(object):
 
     def make(self):
         tree = ast.fix_missing_locations(self.tree)
-        d = {}
         co = compile(tree, self.fn.__code__.co_filename, 'exec')
-        exec co in d
-        make = d['make']
+        myglobals = self.fn.__globals__
+        mylocals = {}
+        exec co in myglobals, mylocals
+        make = mylocals['make']
         return make(**self.extravars)
 
 

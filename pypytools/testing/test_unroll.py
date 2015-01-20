@@ -49,3 +49,13 @@ def test_unrolling(monkeypatch):
     dis.dis(foo)
     monkeypatch.undo()
     assert 'FOR_ITER' not in stdout.getvalue()
+
+
+def my_global():
+    return 42
+
+def test_globals():
+    @unroll()
+    def foo():
+        return my_global()
+    assert foo() == 42
