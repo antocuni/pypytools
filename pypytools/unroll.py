@@ -21,6 +21,7 @@ class Closure(object):
         #
         makesrc = self._create_src()
         self.tree = ast.parse(makesrc)
+        ast.increment_lineno(self.tree, fn.__code__.co_firstlineno-2)
 
     def _create_src(self):
         freevars = self.extravars.keys()

@@ -21,3 +21,12 @@ def test_existing_closure():
     def foo():
         return x-y
     assert foo() == 42
+
+def test_getsource():
+    def foo():
+        pass
+    #
+    foo2 = unroll()(foo)
+    src = inspect.getsource(foo)
+    src2 = inspect.getsource(foo2)
+    assert src == src2
