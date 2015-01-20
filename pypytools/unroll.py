@@ -14,6 +14,10 @@ class Closure(object):
     def __init__(self, fn, **extravars):
         self.fn = fn
         self.extravars = extravars
+        #
+        for freevar, cell in zip(fn.__code__.co_freevars, fn.__closure__):
+            self.extravars[freevar] = cell.cell_contents
+        #
         makesrc = self._create_src()
         self.tree = ast.parse(makesrc)
 
