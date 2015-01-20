@@ -58,4 +58,30 @@ class unroll(object):
 
     def __call__(self, fn):
         closure = Closure(fn, **self.extravars)
+        unroller = Unroller(self.extravars)
+        closure.tree = unroller.visit(closure.tree)
         return closure.make()
+
+
+class Unroller(ast.NodeTransformer):
+    def __init__(self, extravars):
+        self.extravars = extravars
+
+    def visit_For(self, node):
+        if isinstance(node.iter, ast.Name) and node.iter.id in self.extravars:
+            return self.unroll(node)
+        return node
+
+    def unroll(self, fornode):
+        assert fornode.orelse == []
+        items = self.extravars[fornode.iter.id]
+        body = []
+        for i in range(len(items)):
+            item = ast.Subscript(value=ast.Name(id=fornode.iter.id, ctx=ast.Load()),
+                                 slice=ast.Index(value=ast.Num(n=i)),
+                                 ctx=ast.Load())
+            assign = ast.Assign(targets=[fornode.target],
+                                value=item)
+            body.append(assign)
+            body.extend(fornode.body)
+        return body

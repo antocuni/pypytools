@@ -1,4 +1,7 @@
+import sys
 import inspect
+import dis
+from cStringIO import StringIO
 from pypytools.unroll import unroll, Closure
 
 def test_make_closure():
@@ -30,3 +33,19 @@ def test_getsource():
     src = inspect.getsource(foo)
     src2 = inspect.getsource(foo2)
     assert src == src2
+
+
+def test_unrolling(monkeypatch):
+    @unroll(items=(1, 2, 3))
+    def foo():
+        x = 0
+        for i in items:
+            x += i
+        return x
+    assert foo() == 6
+    #
+    stdout = StringIO()
+    monkeypatch.setattr(sys, 'stdout', stdout)
+    dis.dis(foo)
+    monkeypatch.undo()
+    assert 'FOR_ITER' not in stdout.getvalue()
