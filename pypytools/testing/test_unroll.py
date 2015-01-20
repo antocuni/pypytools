@@ -1,3 +1,4 @@
+import inspect
 from pypytools.unroll import unroll, Closure
 
 def test_make_closure():

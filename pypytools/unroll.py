@@ -15,8 +15,9 @@ class Closure(object):
         self.fn = fn
         self.extravars = extravars
         #
-        for freevar, cell in zip(fn.__code__.co_freevars, fn.__closure__):
-            self.extravars[freevar] = cell.cell_contents
+        if fn.__closure__:
+            for freevar, cell in zip(fn.__code__.co_freevars, fn.__closure__):
+                self.extravars[freevar] = cell.cell_contents
         #
         makesrc = self._create_src()
         self.tree = ast.parse(makesrc)
