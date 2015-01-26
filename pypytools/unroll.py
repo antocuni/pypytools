@@ -17,7 +17,8 @@ class Closure(object):
         #
         if fn.__closure__:
             for freevar, cell in zip(fn.__code__.co_freevars, fn.__closure__):
-                self.extravars[freevar] = cell.cell_contents
+                if freevar not in self.extravars:
+                    self.extravars[freevar] = cell.cell_contents
         #
         makesrc = self._create_src()
         self.tree = ast.parse(makesrc)
@@ -52,7 +53,7 @@ def fake_unroll(**kwargs):
 class unroll(object):
 
     def __init__(self, **extravars):
-        self.extravars = extravars
+        self.extravars = tupleify(extravars)
         # we need to specify a fake unroll, to ignore the existing @unroll
         # decorator in the fn source code
         self.extravars['unroll'] = fake_unroll
@@ -86,3 +87,17 @@ class Unroller(ast.NodeTransformer):
             body.append(assign)
             body.extend(fornode.body)
         return body
+
+
+def tupleify(d):
+    """
+    Convert to tuple all the iterables in d
+    """
+    for key, value in d.items():
+        try:
+            iter(value)
+        except TypeError:
+            pass
+        else:
+            d[key] = tuple(value)
+    return d

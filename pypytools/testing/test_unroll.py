@@ -25,6 +25,15 @@ def test_existing_closure():
         return x-y
     assert foo() == 42
 
+
+def test_existing_closure_override():
+    x = 10
+    @unroll(x=42)
+    def foo():
+        return x
+    assert foo() == 42
+
+
 def test_getsource():
     def foo():
         pass
@@ -50,6 +59,22 @@ def test_unrolling(monkeypatch):
     monkeypatch.undo()
     assert 'FOR_ITER' not in stdout.getvalue()
 
+def test_iterable(monkeypatch):
+    items = iter([1, 2, 3])
+    @unroll(items=items)
+    def foo():
+        x = 0
+        for i in items:
+            x += i
+        return x
+    assert foo() == 6
+    #
+    stdout = StringIO()
+    monkeypatch.setattr(sys, 'stdout', stdout)
+    dis.dis(foo)
+    monkeypatch.undo()
+    assert 'FOR_ITER' not in stdout.getvalue()
+
 
 def my_global():
     return 42
@@ -59,3 +84,4 @@ def test_globals():
     def foo():
         return my_global()
     assert foo() == 42
+
