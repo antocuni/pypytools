@@ -29,9 +29,23 @@ class Code(object):
         self._lines.append(' ' * self._indentation + s)
 
     @contextmanager
-    def block(self, s=None):
+    def block(self, s=None, **kwargs):
         if s is not None:
-            self.w(s)
+            self.w(s, **kwargs)
         self._indentation += 4
         yield
         self._indentation -= 4
+
+    @staticmethod
+    def args(varnames, args=None, kwargs=None):
+        varnames = list(varnames)
+        if args is not None:
+            varnames.append(args)
+        if kwargs is not None:
+            varnames.append(kwargs)
+        return ', '.join(varnames)
+
+    def def_(self, funcname, varnames, args=None, kwargs=None):
+        arglist = self.args(varnames, args, kwargs)
+        return self.block('def {funcname}({arglist}):',
+                          funcname=funcname, arglist=arglist)

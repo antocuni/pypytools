@@ -29,3 +29,18 @@ def test_formatting():
     code = Code()
     code.w('{hello}', hello='world')
     assert code.build() == 'world'
+
+def test_args():
+    varnames = ['x', 'y']
+    assert Code.args(varnames) == 'x, y'
+    assert Code.args(varnames, '*args') == 'x, y, *args'
+    assert Code.args(varnames, '*args', '**kwargs') == 'x, y, *args, **kwargs'
+
+def test_def_():
+    code = Code()
+    with code.def_('foo', ['x', 'y']):
+        code.w('return x+y')
+    #
+    code.compile()
+    foo = code['foo']
+    assert foo(1, 2) == 3
