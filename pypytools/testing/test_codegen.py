@@ -8,3 +8,9 @@ def test_build():
     src = code.build()
     assert src == ("if True:\n"
                    "    x = 42")
+
+def test_compile():
+    code = Code()
+    code.w('x = 42')
+    code.compile()
+    assert code['x'] == 42
