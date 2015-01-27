@@ -44,3 +44,6 @@ def test_def_():
     code.compile()
     foo = code['foo']
     assert foo(1, 2) == 3
+
+def test_call():
+    assert Code.call('foo', ['x', 'y']) == 'foo(x, y)'

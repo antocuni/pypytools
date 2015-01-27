@@ -45,6 +45,12 @@ class Code(object):
             varnames.append(kwargs)
         return ', '.join(varnames)
 
+    @staticmethod
+    def call(funcname, varnames, args=None, kwargs=None):
+        arglist = Code.args(varnames, args, kwargs)
+        return '{funcname}({arglist})'.format(funcname=funcname,
+                                              arglist=arglist)
+
     def def_(self, funcname, varnames, args=None, kwargs=None):
         arglist = self.args(varnames, args, kwargs)
         return self.block('def {funcname}({arglist}):',
