@@ -14,3 +14,8 @@ def test_compile():
     code.w('x = 42')
     code.compile()
     assert code['x'] == 42
+
+def test_set_get_globals():
+    code = Code()
+    code['x'] = 42
+    assert code['x'] == 42
