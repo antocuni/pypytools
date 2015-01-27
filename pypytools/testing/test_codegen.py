@@ -19,3 +19,13 @@ def test_set_get_globals():
     code = Code()
     code['x'] = 42
     assert code['x'] == 42
+
+
+def test_formatting():
+    code = Code()
+    code.w('{hello}')
+    assert code.build() == '{hello}'
+    #
+    code = Code()
+    code.w('{hello}', hello='world')
+    assert code.build() == 'world'

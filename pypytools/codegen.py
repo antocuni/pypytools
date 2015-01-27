@@ -23,7 +23,9 @@ class Code(object):
     def __setitem__(self, name, value):
         self._globals[name] = value
 
-    def w(self, s):
+    def w(self, s, **kwargs):
+        if kwargs:
+            s = s.format(**kwargs)
         self._lines.append(' ' * self._indentation + s)
 
     @contextmanager
