@@ -23,7 +23,8 @@ class Code(object):
     def __setitem__(self, name, value):
         self._globals[name] = value
 
-    def w(self, s, **kwargs):
+    def w(self, *parts, **kwargs):
+        s = ' '.join(parts)
         if kwargs:
             s = s.format(**kwargs)
         self._lines.append(' ' * self._indentation + s)
