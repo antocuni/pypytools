@@ -47,3 +47,19 @@ def test_def_():
 
 def test_call():
     assert Code.call('foo', ['x', 'y']) == 'foo(x, y)'
+
+
+def test_new_global():
+    code = Code()
+    name = code.new_global('x', 42)
+    assert name == 'x'
+    assert code['x'] == 42
+    #
+    name = code.new_global('x', 42)
+    assert name == 'x'
+    assert code['x'] == 42
+    #
+    name = code.new_global('x', 43)
+    assert name == 'x__1'
+    assert code['x'] == 42
+    assert code['x__1'] == 43

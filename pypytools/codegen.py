@@ -23,6 +23,25 @@ class Code(object):
     def __setitem__(self, name, value):
         self._globals[name] = value
 
+    def new_global(self, name, value):
+        if name in self._globals:
+            ext_value = self._globals[name]
+            if value == ext_value:
+                return name # nothing to do
+            else:
+                # try to find an unique name
+                name = self._new_global_name(name)
+        self._globals[name] = value
+        return name
+
+    def _new_global_name(self, name):
+        i = 1
+        while True:
+            tryname = '%s__%d' % (name, i)
+            if tryname not in self._globals:
+                return tryname
+            i += 1
+
     def w(self, *parts, **kwargs):
         s = ' '.join(parts)
         if kwargs:
