@@ -1,12 +1,13 @@
 import py
 from contextlib import contextmanager
+from pypytools import compat
 
 class Code(object):
 
     def __init__(self):
         self._lines = []
         self._indentation = 0
-        self._globals = {}
+        self._globals = compat.newdict('module')
 
     def build(self):
         return '\n'.join(self._lines)
