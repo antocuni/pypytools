@@ -69,8 +69,8 @@ class CodePrinter(object):
             self._last = line
             self._indent = len(line) - len(line.lstrip())
 
-    def _print(self, s):
-        indent = ' ' * self._indent
+    def _print(self, s, extra=0):
+        indent = ' ' * (self._indent+extra)
         print '%s%s' % (indent, s)
 
     def bytecode(self, s):
@@ -79,7 +79,7 @@ class CodePrinter(object):
 
     def llop(self, op):
         s = Color.set(Color.yellow, str(op))
-        self._print(s)
+        self._print(s, 4)
 
 class JitView(object):
 
