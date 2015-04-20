@@ -1,0 +1,141 @@
+import sys
+from cStringIO import StringIO
+import dis
+import bisect
+import linecache
+import pypyjit
+
+class Color:
+    black = '30'
+    darkred = '31'
+    darkgreen = '32'    
+    brown = '33'
+    darkblue = '34'
+    purple = '35'
+    teal = '36'
+    lightgray = '37'
+    darkgray = '30;01'
+    red = '31;01'
+    green = '32;01'
+    yellow = '33;01'
+    blue = '34;01'
+    fuchsia = '35;01'
+    turquoise = '36;01'
+    white = '37;01'
+
+    @classmethod
+    def set(cls, color, string):
+        try:
+            color = getattr(cls, color)
+        except AttributeError:
+            pass
+        return '\x1b[%sm%s\x1b[00m' % (color, string)
+
+
+def disass(obj):
+    """
+    Very hackish wrapper around dis.dis. Return a dict {addr: human_repr}
+    """
+    buf = StringIO()
+    stdout = sys.stdout
+    sys.stdout = buf
+    try:
+        dis.dis(obj)
+    finally:
+        sys.stdout = stdout
+    #
+    res = {}
+    lines = buf.getvalue().splitlines()
+    for line in lines:
+        if len(line) < 10:
+            continue
+        line = line[10:].strip()
+        addr, _ = line.split(' ', 1)
+        addr = int(addr)
+        res[addr] = line
+    return res
+
+
+class CodePrinter(object):
+
+    def __init__(self):
+        self._last = None
+        self._indent = 0
+
+    def source(self, filename, lineno):
+        line = linecache.getline(filename, lineno)[:-1]
+        if line != self._last:
+            print line
+            self._last = line
+            self._indent = len(line) - len(line.lstrip())
+
+    def _print(self, s):
+        indent = ' ' * self._indent
+        print '%s%s' % (indent, s)
+
+    def bytecode(self, s):
+        s = Color.set(Color.lightgray, s)
+        self._print(s)
+
+    def llop(self, op):
+        s = Color.set(Color.yellow, str(op))
+        self._print(s)
+
+class JitView(object):
+
+    _is_hook_installed = False
+
+    def __enter__(self):
+        if not JitView._is_hook_installed:
+            pypyjit.set_compile_hook(self.on_compile)
+            JitView._is_hook_installed = True
+
+    def __exit__(self, etype, evalue, tb):
+        pass
+
+    ENTER = __enter__.func_code
+    EXIT = __exit__.func_code
+
+    def on_compile(self, info):
+        if info.jitdriver_name != 'pypyjit':
+            return
+        enabled = False
+        self.printer = CodePrinter()
+        for op in info.operations:
+            if op.name == 'debug_merge_point' and op.pycode is self.ENTER:
+                enabled = True
+            elif op.name == 'debug_merge_point' and op.pycode is self.EXIT:
+                enabled = False
+            elif op.name == 'label':
+                print '---'
+            elif enabled:
+                self._print_op(op)
+
+        pypyjit.set_compile_hook(None)
+        JitView._is_hook_installed = False
+
+    def _print_op(self, op):
+        if op.name == 'debug_merge_point':
+            self._print_debug_merge_point(op)
+        else:
+            self.printer.llop(op)
+
+
+    def _find_lineno(self, op):
+        linestarts = list(dis.findlinestarts(op.pycode))
+        i = bisect.bisect(linestarts, (op.bytecode_no,)) - 1
+        if i < 0:
+            return -1
+        else:
+            _, lineno  = linestarts[i]
+            return lineno
+
+    def _print_debug_merge_point(self, op):
+        bytecodes = disass(op.pycode)
+        lineno = self._find_lineno(op)
+        opcode = bytecodes.get(op.bytecode_no, '')
+        #
+        self.printer.source(op.pycode.co_filename, lineno)
+        self.printer.bytecode(opcode)
+
+
