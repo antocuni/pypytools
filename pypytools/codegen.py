@@ -8,7 +8,7 @@ class Code(object):
         self._lines = []
         self._indentation = 0
         self._globals = compat.newdict('module')
-        self.vars = {}
+        self.kwargs = {}
 
     def build(self):
         return '\n'.join(self._lines)
@@ -46,8 +46,8 @@ class Code(object):
 
     def w(self, *parts, **kwargs):
         s = ' '.join(parts)
-        if self.vars or kwargs:
-            kw = self.vars.copy()
+        if self.kwargs or kwargs:
+            kw = self.kwargs.copy()
             kw.update(kwargs)
             s = s.format(**kw)
         self._lines.append(' ' * self._indentation + s)
@@ -59,6 +59,13 @@ class Code(object):
         self._indentation += 4
         yield
         self._indentation -= 4
+
+    @contextmanager
+    def vars(self, **kwargs):
+        original_kwargs = self.kwargs.copy()
+        self.kwargs.update(kwargs)
+        yield
+        self.kwargs = original_kwargs
 
     @staticmethod
     def args(varnames, args=None, kwargs=None):

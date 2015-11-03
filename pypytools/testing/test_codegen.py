@@ -48,12 +48,27 @@ def test_def_():
 def test_call():
     assert Code.call('foo', ['x', 'y']) == 'foo(x, y)'
 
-def test_global_vars():
+def test_global_kwargs():
     code = Code()
-    code.vars['x'] = 42
+    code.kwargs['x'] = 42
     code.w('return {x}')
     assert code.build() == 'return 42'
-    
+
+def test_global_kwargs_override():
+    code = Code()
+    code.kwargs['x'] = 42
+    code.w('return {x}', x=52)
+    assert code.build() == 'return 52'
+
+def test_with_vars():
+    code = Code()
+    code.kwargs['x'] = 42
+    with code.vars(y=52):
+        assert code.kwargs == {'x': 42, 'y': 52}
+        code.w('x == {x}, y == {y}')
+    assert code.kwargs == {'x': 42}
+    assert code.build() == 'x == 42, y == 52'
+
 
 def test_new_global():
     code = Code()
