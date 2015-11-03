@@ -79,6 +79,21 @@ def test_block_vars():
     assert src == ("if x:\n"
                    "    return x")
 
+def test_block_autopass():
+    code = Code()
+    with code.block('if True:'):
+        pass
+    src = code.build()
+    assert src == ("if True:\n"
+                   "    pass")
+    #
+    code = Code()
+    with code.block('if True:', autopass=False):
+        pass
+    src = code.build()
+    assert src == "if True:"
+    
+    
     
 
 def test_new_global():

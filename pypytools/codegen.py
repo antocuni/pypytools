@@ -53,12 +53,16 @@ class Code(object):
         self._lines.append(' ' * self._indentation + s)
 
     @contextmanager
-    def block(self, s=None, **kwargs):
+    def block(self, s=None, autopass=True, **kwargs):
         with self.vars(**kwargs):
             if s is not None:
                 self.w(s)
             self._indentation += 4
+            n = len(self._lines)
             yield
+            if autopass and n == len(self._lines):
+                # we didn't write anything in the block, so automatically put a 'pass'
+                self.w('pass')
             self._indentation -= 4
 
     @contextmanager
