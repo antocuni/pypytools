@@ -69,6 +69,17 @@ def test_with_vars():
     assert code.kwargs == {'x': 42}
     assert code.build() == 'x == 42, y == 52'
 
+def test_block_vars():
+    code = Code()
+    with code.block('if {name}:', name='x'):
+        code.w('return {name}')
+    #
+    assert code.kwargs == {}
+    src = code.build()
+    assert src == ("if x:\n"
+                   "    return x")
+
+    
 
 def test_new_global():
     code = Code()

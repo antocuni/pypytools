@@ -54,11 +54,12 @@ class Code(object):
 
     @contextmanager
     def block(self, s=None, **kwargs):
-        if s is not None:
-            self.w(s, **kwargs)
-        self._indentation += 4
-        yield
-        self._indentation -= 4
+        with self.vars(**kwargs):
+            if s is not None:
+                self.w(s)
+            self._indentation += 4
+            yield
+            self._indentation -= 4
 
     @contextmanager
     def vars(self, **kwargs):
