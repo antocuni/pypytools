@@ -48,6 +48,12 @@ def test_def_():
 def test_call():
     assert Code.call('foo', ['x', 'y']) == 'foo(x, y)'
 
+def test_global_vars():
+    code = Code()
+    code.vars['x'] = 42
+    code.w('return {x}')
+    assert code.build() == 'return 42'
+    
 
 def test_new_global():
     code = Code()
