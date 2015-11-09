@@ -20,7 +20,6 @@ def test_set_get_globals():
     code['x'] = 42
     assert code['x'] == 42
 
-
 def test_formatting():
     code = Code()
     code.w('{hello}')
@@ -29,6 +28,16 @@ def test_formatting():
     code = Code()
     code.w('{hello}', hello='world')
     assert code.build() == 'world'
+
+def test_ww():
+    code = Code()
+    code.ww("""
+        if {name}:
+            return {name}
+    """, name="x")
+    src = code.build()
+    assert src == ("if x:\n"
+                   "    return x")
 
 def test_args():
     varnames = ['x', 'y']
@@ -59,7 +68,6 @@ def test_global_kwargs_override():
     code.global_scope.x = 42
     code.w('return {x}', x=52)
     assert code.build() == 'return 52'
-
 
 def test_block_autopass():
     code = Code()

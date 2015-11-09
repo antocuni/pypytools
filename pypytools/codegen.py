@@ -1,4 +1,5 @@
 import py
+import textwrap
 from contextlib import contextmanager
 from pypytools import compat
 
@@ -12,6 +13,7 @@ class Code(object):
         #
         self.new_scope = self.global_scope.new_scope
         self.w = self.global_scope.w
+        self.ww = self.global_scope.ww
         self.block = self.global_scope.block
         self.def_ = self.global_scope.def_
 
@@ -93,6 +95,14 @@ class Scope(object):
         if kwargs:
             s = s.format(**kwargs)
         self.__code._lines.append(' ' * self.__code._indentation + s)
+
+    def ww(self, s, **kwargs):
+        """
+        Like code.w, but dedent the code first. Useful with triple-quoted strings
+        """
+        s = textwrap.dedent(s[1:])
+        for line in s.splitlines():
+            self.w(line, **kwargs)
 
     @contextmanager
     def block(self, s=None, autopass=True, **kwargs):
