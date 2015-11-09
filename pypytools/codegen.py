@@ -8,7 +8,12 @@ class Code(object):
         self._lines = []
         self._indentation = 0
         self._globals = compat.newdict('module')
-        self.kwargs = {}
+        self.global_scope = Scope(self)
+        #
+        self.new_scope = self.global_scope.new_scope
+        self.w = self.global_scope.w
+        self.block = self.global_scope.block
+        self.def_ = self.global_scope.def_
 
     def build(self):
         return '\n'.join(self._lines)
@@ -44,34 +49,6 @@ class Code(object):
                 return tryname
             i += 1
 
-    def w(self, *parts, **kwargs):
-        s = ' '.join(parts)
-        if self.kwargs or kwargs:
-            kw = self.kwargs.copy()
-            kw.update(kwargs)
-            s = s.format(**kw)
-        self._lines.append(' ' * self._indentation + s)
-
-    @contextmanager
-    def block(self, s=None, autopass=True, **kwargs):
-        with self.vars(**kwargs):
-            if s is not None:
-                self.w(s)
-            self._indentation += 4
-            n = len(self._lines)
-            yield
-            if autopass and n == len(self._lines):
-                # we didn't write anything in the block, so automatically put a 'pass'
-                self.w('pass')
-            self._indentation -= 4
-
-    @contextmanager
-    def vars(self, **kwargs):
-        original_kwargs = self.kwargs.copy()
-        self.kwargs.update(kwargs)
-        yield
-        self.kwargs = original_kwargs
-
     @staticmethod
     def args(varnames, args=None, kwargs=None):
         varnames = list(varnames)
@@ -87,7 +64,50 @@ class Code(object):
         return '{funcname}({arglist})'.format(funcname=funcname,
                                               arglist=arglist)
 
+
+class Scope(object):
+
+    # use __slots__ to ensure that we can have a __code attribute without
+    # having it in __dict__: we want __dict__ to be empty by default, so that
+    # we know when to apply formatting
+    __slots__ = ['__code', '__dict__']
+
+    def __init__(self, code, **kwargs):
+        self.__code = code
+        self.__dict__.update(kwargs)
+
+    def _kwargs(self, kwargs):
+        if self.__dict__:
+            d = self.__dict__.copy()
+            d.update(kwargs)
+            return d
+        return kwargs
+
+    def new_scope(self, **kwargs):
+        kwargs = self._kwargs(kwargs)
+        return Scope(self.__code, **kwargs)
+
+    def w(self, *parts, **kwargs):
+        s = ' '.join(parts)
+        kwargs = self._kwargs(kwargs)
+        if kwargs:
+            s = s.format(**kwargs)
+        self.__code._lines.append(' ' * self.__code._indentation + s)
+
+    @contextmanager
+    def block(self, s=None, autopass=True, **kwargs):
+        ns = self.new_scope(**kwargs)
+        if s is not None:
+            ns.w(s)
+        self.__code._indentation += 4
+        n = len(self.__code._lines)
+        yield ns
+        if autopass and n == len(self.__code._lines):
+            # we didn't write anything in the block, so automatically put a 'pass'
+            ns.w('pass')
+        self.__code._indentation -= 4
+
     def def_(self, funcname, varnames, args=None, kwargs=None):
-        arglist = self.args(varnames, args, kwargs)
+        arglist = Code.args(varnames, args, kwargs)
         return self.block('def {funcname}({arglist}):',
                           funcname=funcname, arglist=arglist)

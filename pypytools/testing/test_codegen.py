@@ -50,34 +50,16 @@ def test_call():
 
 def test_global_kwargs():
     code = Code()
-    code.kwargs['x'] = 42
+    code.global_scope.x = 42
     code.w('return {x}')
     assert code.build() == 'return 42'
 
 def test_global_kwargs_override():
     code = Code()
-    code.kwargs['x'] = 42
+    code.global_scope.x = 42
     code.w('return {x}', x=52)
     assert code.build() == 'return 52'
 
-def test_with_vars():
-    code = Code()
-    code.kwargs['x'] = 42
-    with code.vars(y=52):
-        assert code.kwargs == {'x': 42, 'y': 52}
-        code.w('x == {x}, y == {y}')
-    assert code.kwargs == {'x': 42}
-    assert code.build() == 'x == 42, y == 52'
-
-def test_block_vars():
-    code = Code()
-    with code.block('if {name}:', name='x'):
-        code.w('return {name}')
-    #
-    assert code.kwargs == {}
-    src = code.build()
-    assert src == ("if x:\n"
-                   "    return x")
 
 def test_block_autopass():
     code = Code()
@@ -92,9 +74,6 @@ def test_block_autopass():
         pass
     src = code.build()
     assert src == "if True:"
-    
-    
-    
 
 def test_new_global():
     code = Code()
@@ -110,3 +89,29 @@ def test_new_global():
     assert name == 'x__1'
     assert code['x'] == 42
     assert code['x__1'] == 43
+
+class TestScope:
+    
+    def test_new_scope(self):
+        code = Code()
+        code.global_scope.x = 42
+        code.global_scope.y = 52
+        ns = code.new_scope(y=53, z=63)
+        assert ns.__dict__ == dict(x=42, y=53, z=63)
+
+    def test_scope_formatting(self):
+        code = Code()
+        ns = code.new_scope(y=52)
+        ns.x = 42
+        ns.w('x == {x}, y == {y}')
+        assert code.build() == 'x == 42, y == 52'
+
+    def test_block_namespace(self):
+        code = Code()
+        with code.block('if {name}:', name='x') as ns:
+            ns.w('return {name}')
+        #
+        src = code.build()
+        assert src == ("if x:\n"
+                       "    return x")
+
