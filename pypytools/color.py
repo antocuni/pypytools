@@ -16,6 +16,8 @@ class Color:
     turquoise = '36;01'
     white = '37;01'
 
+    green_bg = '42'
+
     @classmethod
     def set(cls, color, string):
         try:

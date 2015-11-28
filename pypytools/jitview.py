@@ -86,7 +86,9 @@ class JitView(object):
             elif op.name == 'debug_merge_point' and op.pycode is self.EXIT:
                 enabled = False
             elif op.name == 'label':
-                print '---'
+                print
+                print Color.set(Color.green_bg, '-'*80)
+                print
             elif enabled:
                 self._print_op(op)
 
