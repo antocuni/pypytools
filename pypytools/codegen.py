@@ -89,11 +89,15 @@ class Scope(object):
         kwargs = self._kwargs(kwargs)
         return Scope(self.__code, **kwargs)
 
-    def w(self, *parts, **kwargs):
-        s = ' '.join(parts)
+    def format(self, s, **kwargs):
         kwargs = self._kwargs(kwargs)
         if kwargs:
             s = s.format(**kwargs)
+        return s
+
+    def w(self, *parts, **kwargs):
+        s = ' '.join(parts)
+        s = self.format(s, **kwargs)
         self.__code._lines.append(' ' * self.__code._indentation + s)
 
     def ww(self, s, **kwargs):
