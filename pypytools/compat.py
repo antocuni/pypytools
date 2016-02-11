@@ -2,9 +2,9 @@
 CPython emulation of some of the __pypy__ builtins
 """
 
-from pypytools import is_pypy
+from pypytools import IS_PYPY
 
-if is_pypy:
+if IS_PYPY:
     from __pypy__ import newdict
     
 else:

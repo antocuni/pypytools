@@ -1,5 +1,5 @@
 import sys
-from pypytools import is_pypy
+from pypytools import IS_PYPY
 
 def as_signed(x, bits):
     """
@@ -23,7 +23,7 @@ def as_signed(x, bits):
         x -= 1<<bits
     return x
 
-if is_pypy:
+if IS_PYPY:
     import __pypy__
 
     if sys.maxint == (1<<63)-1:
