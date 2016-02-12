@@ -54,6 +54,21 @@ def test_def_():
     foo = code['foo']
     assert foo(1, 2) == 3
 
+def test_cpdef():
+    code = Code()
+    with code.cpdef_('foo', ['x', 'y']):
+        code.w('return x+y')
+    src = code.build()
+    assert src == ("def foo(x, y):\n"
+                   "    return x+y")
+    #
+    code = Code(pyx=True)
+    with code.cpdef_('foo', ['x', 'y']):
+        code.w('return x+y')
+    src = code.build()
+    assert src == ("cpdef foo(x, y):\n"
+                   "    return x+y")
+
 def test_call():
     assert Code.call('foo', ['x', 'y']) == 'foo(x, y)'
 

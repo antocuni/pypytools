@@ -5,17 +5,23 @@ from pypytools import compat
 
 class Code(object):
 
-    def __init__(self):
+    def __init__(self, pyx=False):
+        self.pyx = pyx
         self._lines = []
         self._indentation = 0
         self._globals = compat.newdict('module')
         self.global_scope = Scope(self)
+        if self.pyx:
+            self.global_scope.cpdef = 'cpdef'
+        else:
+            self.global_scope.cpdef = 'def'
         #
         self.new_scope = self.global_scope.new_scope
         self.w = self.global_scope.w
         self.ww = self.global_scope.ww
         self.block = self.global_scope.block
         self.def_ = self.global_scope.def_
+        self.cpdef_ = self.global_scope.cpdef_
 
     def build(self):
         return '\n'.join(self._lines)
@@ -124,4 +130,9 @@ class Scope(object):
     def def_(self, funcname, varnames, args=None, kwargs=None):
         arglist = Code.args(varnames, args, kwargs)
         return self.block('def {funcname}({arglist}):',
+                          funcname=funcname, arglist=arglist)
+
+    def cpdef_(self, funcname, varnames, args=None, kwargs=None):
+        arglist = Code.args(varnames, args, kwargs)
+        return self.block('{cpdef} {funcname}({arglist}):',
                           funcname=funcname, arglist=arglist)
