@@ -133,6 +133,10 @@ class Scope(object):
                           funcname=funcname, arglist=arglist)
 
     def cpdef_(self, funcname, varnames, args=None, kwargs=None):
+        """
+        In pyx mode, this emits a cpdef block; in py mode, it's the very same as
+        def_
+        """
         arglist = Code.args(varnames, args, kwargs)
         return self.block('{cpdef} {funcname}({arglist}):',
                           funcname=funcname, arglist=arglist)
