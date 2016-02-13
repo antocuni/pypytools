@@ -11,10 +11,6 @@ class Code(object):
         self._indentation = 0
         self._globals = compat.newdict('module')
         self.global_scope = Scope(self)
-        if self.pyx:
-            self.global_scope.cpdef = 'cpdef'
-        else:
-            self.global_scope.cpdef = 'def'
         #
         self.new_scope = self.global_scope.new_scope
         self.w = self.global_scope.w
@@ -138,5 +134,6 @@ class Scope(object):
         def_
         """
         arglist = Code.args(varnames, args, kwargs)
+        cpdef = self.__code.pyx and 'cpdef' or 'def'
         return self.block('{cpdef} {funcname}({arglist}):',
-                          funcname=funcname, arglist=arglist)
+                          cpdef=cpdef, funcname=funcname, arglist=arglist)
