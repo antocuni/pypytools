@@ -54,12 +54,24 @@ class Code(object):
             i += 1
 
     def args(self, varnames, args=None, kwargs=None):
+        """
+        Format a string representing an argument list to be used in calls.
+        """
+        return self._format_args(varnames, args, kwargs, mode='args')
+
+    def params(self, varnames, args=None, kwargs=None):
+        """
+        Format a string representing a parameter list to be used in function definitions
+        """
+        return self._format_args(varnames, args, kwargs, mode='params')
+
+    def _format_args(self, varnames, args, kwargs, mode):
         def typevar(varname):
             # Cython gets confused if we use e.g. 'void' as a varname; we need
             # to explicitly use "object void" to make it working. For
             # simplicity, we simply add an explicit "object" type to every
             # argument, when in pyx mode
-            if self.pyx:
+            if mode == 'params' and self.pyx:
                 return 'object %s' % varname
             return varname
         #
@@ -137,16 +149,16 @@ class Scope(object):
         self.__code._indentation -= 4
 
     def def_(self, funcname, varnames, args=None, kwargs=None):
-        arglist = self.__code.args(varnames, args, kwargs)
-        return self.block('def {funcname}({arglist}):',
-                          funcname=funcname, arglist=arglist)
+        paramlist = self.__code.params(varnames, args, kwargs)
+        return self.block('def {funcname}({paramlist}):',
+                          funcname=funcname, paramlist=paramlist)
 
     def cpdef_(self, funcname, varnames, args=None, kwargs=None):
         """
         In pyx mode, this emits a cpdef block; in py mode, it's the very same as
         def_
         """
-        arglist = self.__code.args(varnames, args, kwargs)
+        paramlist = self.__code.params(varnames, args, kwargs)
         cpdef = self.__code.pyx and 'cpdef' or 'def'
-        return self.block('{cpdef} {funcname}({arglist}):',
-                          cpdef=cpdef, funcname=funcname, arglist=arglist)
+        return self.block('{cpdef} {funcname}({paramlist}):',
+                          cpdef=cpdef, funcname=funcname, paramlist=paramlist)

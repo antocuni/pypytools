@@ -40,14 +40,21 @@ def test_ww():
                    "    return x")
 
 
-class TestArgs(object):
+class TestArgsAndParams(object):
     
-    def test_simple(self):
+    def test_args_simple(self):
         code = Code()
         varnames = ['x', 'y']
         assert code.args(varnames) == 'x, y'
         assert code.args(varnames, '*args') == 'x, y, *args'
         assert code.args(varnames, '*args', '**kwargs') == 'x, y, *args, **kwargs'
+
+    def test_params_simple(self):
+        code = Code()
+        varnames = ['x', 'y']
+        assert code.params(varnames) == 'x, y'
+        assert code.params(varnames, '*args') == 'x, y, *args'
+        assert code.params(varnames, '*args', '**kwargs') == 'x, y, *args, **kwargs'
 
     def test_args_default(self):
         code = Code()
@@ -59,19 +66,21 @@ class TestArgs(object):
     def test_pyx_types(self):
         code = Code(pyx=True)
         varnames = ['x', 'y']
-        assert code.args(varnames) == 'object x, object y'
-        assert code.args(varnames, '*args') == 'object x, object y, *args'
+        assert code.args(varnames) == 'x, y'
+        assert code.args(varnames, '*args') == 'x, y, *args'
+        assert code.params(varnames) == 'object x, object y'
+        assert code.params(varnames, '*args') == 'object x, object y, *args'
 
     def test_pyx_default(self):
         code = Code(pyx=True)
         varnames = ['x', ('y', 3)]
-        assert code.args(varnames) == 'object x, object y=3'
-        assert code.args(varnames, '*args') == 'object x, object y=3, *args'
+        assert code.params(varnames) == 'object x, object y=3'
+        assert code.params(varnames, '*args') == 'object x, object y=3, *args'
 
     def test_call(self):
-        code = Code()
-        assert code.call('foo', ['x', 'y']) == 'foo(x, y)'
-        
+        for pyx in (False, True):
+            code = Code(pyx=pyx)
+            assert code.call('foo', ['x', 'y']) == 'foo(x, y)'
 
 
 def test_def_():
