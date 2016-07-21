@@ -54,17 +54,27 @@ class Code(object):
             i += 1
 
     def args(self, varnames, args=None, kwargs=None):
-        def getvar(varname):
-            if isinstance(varname, tuple):
-                return '%s=%s' % varname
+        def typevar(varname):
+            # Cython gets confused if we use e.g. 'void' as a varname; we need
+            # to explicitly use "object void" to make it working. For
+            # simplicity, we simply add an explicit "object" type to every
+            # argument, when in pyx mode
+            if self.pyx:
+                return 'object %s' % varname
             return varname
         #
-        varnames = [getvar(v) for v in varnames]
+        def getvar(varname):
+            if isinstance(varname, tuple):
+                name, default = varname
+                return '%s=%s' % (typevar(name), default)
+            return typevar(varname)
+        #
+        parts = [getvar(v) for v in varnames]
         if args is not None:
-            varnames.append(args)
+            parts.append(args)
         if kwargs is not None:
-            varnames.append(kwargs)
-        return ', '.join(varnames)
+            parts.append(kwargs)
+        return ', '.join(parts)
 
     def call(self, funcname, varnames, args=None, kwargs=None):
         arglist = self.args(varnames, args, kwargs)

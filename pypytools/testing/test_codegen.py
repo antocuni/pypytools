@@ -56,9 +56,22 @@ class TestArgs(object):
         assert code.args(varnames, '*args') == 'x, y=3, *args'
         assert code.args(varnames, '*args', '**kwargs') == 'x, y=3, *args, **kwargs'
 
+    def test_pyx_types(self):
+        code = Code(pyx=True)
+        varnames = ['x', 'y']
+        assert code.args(varnames) == 'object x, object y'
+        assert code.args(varnames, '*args') == 'object x, object y, *args'
+
+    def test_pyx_default(self):
+        code = Code(pyx=True)
+        varnames = ['x', ('y', 3)]
+        assert code.args(varnames) == 'object x, object y=3'
+        assert code.args(varnames, '*args') == 'object x, object y=3, *args'
+
     def test_call(self):
         code = Code()
         assert code.call('foo', ['x', 'y']) == 'foo(x, y)'
+        
 
 
 def test_def_():
@@ -93,7 +106,7 @@ def test_cpdef():
     with code.cpdef_('foo', ['x', 'y']):
         code.w('return x+y')
     src = code.build()
-    assert src == ("cpdef foo(x, y):\n"
+    assert src == ("cpdef foo(object x, object y):\n"
                    "    return x+y")
 
 
