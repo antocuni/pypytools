@@ -45,6 +45,12 @@ def test_args():
     assert Code.args(varnames, '*args') == 'x, y, *args'
     assert Code.args(varnames, '*args', '**kwargs') == 'x, y, *args, **kwargs'
 
+def test_args_default():
+    varnames = ['x', ('y', 3)]
+    assert Code.args(varnames) == 'x, y=3'
+    assert Code.args(varnames, '*args') == 'x, y=3, *args'
+    assert Code.args(varnames, '*args', '**kwargs') == 'x, y=3, *args, **kwargs'
+
 def test_def_():
     code = Code()
     with code.def_('foo', ['x', 'y']):
@@ -53,6 +59,17 @@ def test_def_():
     code.compile()
     foo = code['foo']
     assert foo(1, 2) == 3
+
+def test_def__default_args():
+    code = Code()
+    with code.def_('foo', ['x', ('y', 3)]):
+        code.w('return x+y')
+    #
+    code.compile()
+    foo = code['foo']
+    assert foo(1) == 4
+    assert foo(1, 10) == 11
+
 
 def test_cpdef():
     code = Code()

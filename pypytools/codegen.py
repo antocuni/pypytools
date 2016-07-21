@@ -55,7 +55,12 @@ class Code(object):
 
     @staticmethod
     def args(varnames, args=None, kwargs=None):
-        varnames = list(varnames)
+        def getvar(varname):
+            if isinstance(varname, tuple):
+                return '%s=%s' % varname
+            return varname
+        #
+        varnames = [getvar(v) for v in varnames]
         if args is not None:
             varnames.append(args)
         if kwargs is not None:
