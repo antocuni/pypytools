@@ -53,8 +53,7 @@ class Code(object):
                 return tryname
             i += 1
 
-    @staticmethod
-    def args(varnames, args=None, kwargs=None):
+    def args(self, varnames, args=None, kwargs=None):
         def getvar(varname):
             if isinstance(varname, tuple):
                 return '%s=%s' % varname
@@ -67,9 +66,8 @@ class Code(object):
             varnames.append(kwargs)
         return ', '.join(varnames)
 
-    @staticmethod
-    def call(funcname, varnames, args=None, kwargs=None):
-        arglist = Code.args(varnames, args, kwargs)
+    def call(self, funcname, varnames, args=None, kwargs=None):
+        arglist = self.args(varnames, args, kwargs)
         return '{funcname}({arglist})'.format(funcname=funcname,
                                               arglist=arglist)
 
@@ -129,7 +127,7 @@ class Scope(object):
         self.__code._indentation -= 4
 
     def def_(self, funcname, varnames, args=None, kwargs=None):
-        arglist = Code.args(varnames, args, kwargs)
+        arglist = self.__code.args(varnames, args, kwargs)
         return self.block('def {funcname}({arglist}):',
                           funcname=funcname, arglist=arglist)
 
@@ -138,7 +136,7 @@ class Scope(object):
         In pyx mode, this emits a cpdef block; in py mode, it's the very same as
         def_
         """
-        arglist = Code.args(varnames, args, kwargs)
+        arglist = self.__code.args(varnames, args, kwargs)
         cpdef = self.__code.pyx and 'cpdef' or 'def'
         return self.block('{cpdef} {funcname}({arglist}):',
                           cpdef=cpdef, funcname=funcname, arglist=arglist)

@@ -39,17 +39,27 @@ def test_ww():
     assert src == ("if x:\n"
                    "    return x")
 
-def test_args():
-    varnames = ['x', 'y']
-    assert Code.args(varnames) == 'x, y'
-    assert Code.args(varnames, '*args') == 'x, y, *args'
-    assert Code.args(varnames, '*args', '**kwargs') == 'x, y, *args, **kwargs'
 
-def test_args_default():
-    varnames = ['x', ('y', 3)]
-    assert Code.args(varnames) == 'x, y=3'
-    assert Code.args(varnames, '*args') == 'x, y=3, *args'
-    assert Code.args(varnames, '*args', '**kwargs') == 'x, y=3, *args, **kwargs'
+class TestArgs(object):
+    
+    def test_simple(self):
+        code = Code()
+        varnames = ['x', 'y']
+        assert code.args(varnames) == 'x, y'
+        assert code.args(varnames, '*args') == 'x, y, *args'
+        assert code.args(varnames, '*args', '**kwargs') == 'x, y, *args, **kwargs'
+
+    def test_args_default(self):
+        code = Code()
+        varnames = ['x', ('y', 3)]
+        assert code.args(varnames) == 'x, y=3'
+        assert code.args(varnames, '*args') == 'x, y=3, *args'
+        assert code.args(varnames, '*args', '**kwargs') == 'x, y=3, *args, **kwargs'
+
+    def test_call(self):
+        code = Code()
+        assert code.call('foo', ['x', 'y']) == 'foo(x, y)'
+
 
 def test_def_():
     code = Code()
@@ -86,8 +96,6 @@ def test_cpdef():
     assert src == ("cpdef foo(x, y):\n"
                    "    return x+y")
 
-def test_call():
-    assert Code.call('foo', ['x', 'y']) == 'foo(x, y)'
 
 def test_global_kwargs():
     code = Code()
