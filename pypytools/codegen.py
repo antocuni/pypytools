@@ -18,6 +18,7 @@ class Code(object):
         self.block = self.global_scope.block
         self.def_ = self.global_scope.def_
         self.cpdef_ = self.global_scope.cpdef_
+        self.cdef_ = self.global_scope.cdef_
 
     def build(self):
         return '\n'.join(self._lines)
@@ -152,6 +153,16 @@ class Scope(object):
         paramlist = self.__code.params(varnames, args, kwargs)
         return self.block('def {funcname}({paramlist}):',
                           funcname=funcname, paramlist=paramlist)
+
+    def cdef_(self, funcname, varnames, args=None, kwargs=None):
+        """
+        In pyx mode, this emits a cdef block; in py mode, it's the very same as
+        def_
+        """
+        paramlist = self.__code.params(varnames, args, kwargs)
+        cpdef = self.__code.pyx and 'cdef' or 'def'
+        return self.block('{cpdef} {funcname}({paramlist}):',
+                          cpdef=cpdef, funcname=funcname, paramlist=paramlist)
 
     def cpdef_(self, funcname, varnames, args=None, kwargs=None):
         """
