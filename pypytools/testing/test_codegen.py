@@ -119,6 +119,29 @@ def test_cpdef():
                    "    return x+y")
 
 
+def test_cdef_var():
+    code = Code()
+    with code.def_('foo', ['x', 'y']):
+        code.cdef_var('long', 'foo')
+        code.cdef_var('int', 'bar', 42)
+        code.w('return')
+    src = code.build()
+    assert src == ("def foo(x, y):\n"
+                   "    return")
+    #
+    code = Code(pyx=True)
+    with code.def_('foo', ['x', 'y']):
+        code.cdef_var('long', 'foo')
+        code.cdef_var('int', 'bar', 42)
+        code.w('return')
+    src = code.build()
+    assert src == ("def foo(object x, object y):\n"
+                   "    cdef long foo\n"
+                   "    cdef int bar = 42\n"
+                   "    return")
+
+
+
 def test_global_kwargs():
     code = Code()
     code.global_scope.x = 42

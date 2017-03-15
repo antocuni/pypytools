@@ -19,6 +19,7 @@ class Code(object):
         self.def_ = self.global_scope.def_
         self.cpdef_ = self.global_scope.cpdef_
         self.cdef_ = self.global_scope.cdef_
+        self.cdef_var = self.global_scope.cdef_var
 
     def build(self):
         return '\n'.join(self._lines)
@@ -173,3 +174,12 @@ class Scope(object):
         cpdef = self.__code.pyx and 'cpdef' or 'def'
         return self.block('{cpdef} {funcname}({paramlist}):',
                           cpdef=cpdef, funcname=funcname, paramlist=paramlist)
+
+    def cdef_var(self, typename, varname, default=None):
+        if not self.__code.pyx:
+            return
+        if default is None:
+            self.w('cdef {typename} {varname}', typename=typename, varname=varname)
+        else:
+            self.w('cdef {typename} {varname} = {default}',
+                   typename=typename, varname=varname, default=default)
