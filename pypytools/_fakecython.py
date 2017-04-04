@@ -56,6 +56,13 @@ class FakeCython(object):
     def returns(t):
         return identity
 
+    # at the moment of writing, @cython.except_ is not a feature of standard
+    # Cython, but you need my fork to use it:
+    # https://github.com/antocuni/cython/tree/pure-except
+    @staticmethod
+    def except_(ret):
+        return identity
+
     @staticmethod
     def locals(**kwds):
         return identity
@@ -64,7 +71,3 @@ class FakeCython(object):
     def declare(**kwds):
         pass
 
-    ## # at the moment of writing, @cython.except_ is not a feature of standard
-    ## # Cython, but you need my fork to use it:
-    ## # https://github.com/antocuni/cython/tree/pure-except
-    ## except_ = lambda v: _identity
