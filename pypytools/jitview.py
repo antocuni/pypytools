@@ -1,5 +1,5 @@
 import sys
-from cStringIO import StringIO
+from io import StringIO
 import dis
 import bisect
 import linecache
@@ -44,13 +44,13 @@ class CodePrinter(object):
     def source(self, filename, lineno):
         line = linecache.getline(filename, lineno)[:-1]
         if line != self._last:
-            print line
+            print(line)
             self._last = line
             self._indent = len(line) - len(line.lstrip())
 
     def _print(self, s, extra=0):
         indent = ' ' * (self._indent+extra)
-        print '%s%s' % (indent, s)
+        print('%s%s' % (indent, s))
 
     def bytecode(self, s):
         s = Color.set(Color.lightgray, s)
@@ -72,8 +72,8 @@ class JitView(object):
     def __exit__(self, etype, evalue, tb):
         pass
 
-    ENTER = __enter__.func_code
-    EXIT = __exit__.func_code
+    ENTER = __enter__.__code__
+    EXIT = __exit__.__code__
 
     def on_compile(self, info):
         if info.jitdriver_name != 'pypyjit':
@@ -86,9 +86,9 @@ class JitView(object):
             elif op.name == 'debug_merge_point' and op.pycode is self.EXIT:
                 enabled = False
             elif op.name == 'label':
-                print
-                print Color.set(Color.green_bg, '-'*80)
-                print
+                print()
+                print(Color.set(Color.green_bg, '-'*80))
+                print()
             elif enabled:
                 self._print_op(op)
 

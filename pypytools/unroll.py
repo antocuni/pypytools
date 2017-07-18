@@ -4,10 +4,10 @@ import ast
 
 def d(node):
     import astpp
-    import codegen
-    print astpp.dump(node)
-    print
-    print codegen.to_source(node)
+    from . import codegen
+    print(astpp.dump(node))
+    print()
+    print(codegen.to_source(node))
 
 class Closure(object):
 
@@ -25,7 +25,7 @@ class Closure(object):
         ast.increment_lineno(self.tree, fn.__code__.co_firstlineno-2)
 
     def _create_src(self):
-        freevars = self.extravars.keys()
+        freevars = list(self.extravars.keys())
         innersrc = py.code.Source(self.fn)
         lines = [
             'def make(%s):' % ', '.join(freevars),
@@ -39,7 +39,7 @@ class Closure(object):
         co = compile(tree, self.fn.__code__.co_filename, 'exec')
         myglobals = self.fn.__globals__
         mylocals = {}
-        exec co in myglobals, mylocals
+        exec(co, myglobals, mylocals)
         make = mylocals['make']
         return make(**self.extravars)
 
@@ -93,7 +93,7 @@ def tupleify(d):
     """
     Convert to tuple all the iterables in d
     """
-    for key, value in d.items():
+    for key, value in list(d.items()):
         try:
             iter(value)
         except TypeError:

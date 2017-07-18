@@ -6,8 +6,8 @@ class TestFakeCython:
     def test_fakecython(self):
         fake = FakeCython()
         @fake.cfunc
-        @fake.locals(a=long, b=long)
-        @fake.returns(long)
+        @fake.locals(a=int, b=int)
+        @fake.returns(int)
         def foo(a, b):
             return a+b
         #

@@ -1,7 +1,7 @@
 import sys
 import inspect
 import dis
-from cStringIO import StringIO
+from io import StringIO
 from pypytools.unroll import unroll, Closure
 
 def test_make_closure():
