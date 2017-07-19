@@ -1,8 +1,14 @@
 import sys
 import inspect
 import dis
-from cStringIO import StringIO
 from pypytools.unroll import unroll, Closure
+from pypytools.util import PY3
+
+if PY3:
+    from io import StringIO
+else:
+    from cStringIO import StringIO
+
 
 def test_make_closure():
     def foo():

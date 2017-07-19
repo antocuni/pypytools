@@ -1,6 +1,5 @@
 from __future__ import print_function
 import sys
-from cStringIO import StringIO
 import dis
 import bisect
 import linecache
@@ -10,7 +9,12 @@ except ImportError:
     pass
 
 from pypytools.color import Color
+from pypytools.util import PY3
 
+if PY3:
+    from io import StringIO
+else:
+    from cStringIO import StringIO
 
 def disass(obj):
     """
