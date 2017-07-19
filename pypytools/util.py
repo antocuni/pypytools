@@ -1,4 +1,7 @@
 import types
+from sys import version_info
+
+PY3 = version_info.major == 3
 
 def clonefunc(f):
     """Deep clone the given function to create a new one.
