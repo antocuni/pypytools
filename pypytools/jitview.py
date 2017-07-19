@@ -1,5 +1,5 @@
+from __future__ import print_function
 import sys
-from io import StringIO
 import dis
 import bisect
 import linecache
@@ -9,7 +9,12 @@ except ImportError:
     pass
 
 from pypytools.color import Color
+from pypytools.util import PY3
 
+if PY3:
+    from io import StringIO
+else:
+    from cStringIO import StringIO
 
 def disass(obj):
     """
@@ -87,7 +92,7 @@ class JitView(object):
                 enabled = False
             elif op.name == 'label':
                 print()
-                print(Color.set(Color.green_bg, '-'*80))
+                print(Color.set(Color.green_bg, '-' * 80))
                 print()
             elif enabled:
                 self._print_op(op)

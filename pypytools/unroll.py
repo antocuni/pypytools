@@ -1,13 +1,15 @@
+from __future__ import print_function
 import py
 import types
 import ast
 
 def d(node):
     import astpp
-    from . import codegen
+    import codegen
     print(astpp.dump(node))
     print()
     print(codegen.to_source(node))
+
 
 class Closure(object):
 
@@ -25,7 +27,7 @@ class Closure(object):
         ast.increment_lineno(self.tree, fn.__code__.co_firstlineno-2)
 
     def _create_src(self):
-        freevars = list(self.extravars.keys())
+        freevars = self.extravars.keys()
         innersrc = py.code.Source(self.fn)
         lines = [
             'def make(%s):' % ', '.join(freevars),
@@ -93,7 +95,7 @@ def tupleify(d):
     """
     Convert to tuple all the iterables in d
     """
-    for key, value in list(d.items()):
+    for key, value in d.items():
         try:
             iter(value)
         except TypeError:

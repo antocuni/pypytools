@@ -1,13 +1,17 @@
 import sys
 from pypytools._fakecython import FakeCython
+from pypytools.util import PY3
+
+if PY3:
+    long = int
 
 class TestFakeCython:
 
     def test_fakecython(self):
         fake = FakeCython()
         @fake.cfunc
-        @fake.locals(a=int, b=int)
-        @fake.returns(int)
+        @fake.locals(a=long, b=long)
+        @fake.returns(long)
         def foo(a, b):
             return a+b
         #
