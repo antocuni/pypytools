@@ -26,7 +26,7 @@ def as_signed(x, bits):
 if IS_PYPY:
     import __pypy__
 
-    if sys.maxint == (1<<63)-1:
+    if sys.maxsize == (1<<63)-1:
         BITSIZE = 64
     else:
         BITSIZE = 32

@@ -28,7 +28,7 @@ class Code(object):
         src = self.build()
         src = py.code.Source(src)
         co = src.compile()
-        exec co in self._globals
+        exec(co, self._globals)
 
     def __getitem__(self, name):
         return self._globals[name]

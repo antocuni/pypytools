@@ -1,3 +1,4 @@
+from __future__ import print_function
 import py
 import types
 import ast
@@ -5,9 +6,10 @@ import ast
 def d(node):
     import astpp
     import codegen
-    print astpp.dump(node)
-    print
-    print codegen.to_source(node)
+    print(astpp.dump(node))
+    print()
+    print(codegen.to_source(node))
+
 
 class Closure(object):
 
@@ -39,7 +41,7 @@ class Closure(object):
         co = compile(tree, self.fn.__code__.co_filename, 'exec')
         myglobals = self.fn.__globals__
         mylocals = {}
-        exec co in myglobals, mylocals
+        exec(co, myglobals, mylocals)
         make = mylocals['make']
         return make(**self.extravars)
 
