@@ -17,9 +17,12 @@ def clonefunc(f):
     """
     # first of all, we clone the code object
     co = f.__code__
-    co2 = types.CodeType(co.co_argcount, co.co_nlocals, co.co_stacksize, co.co_flags, co.co_code,
-                         co.co_consts, co.co_names, co.co_varnames, co.co_filename, co.co_name,
-                         co.co_firstlineno, co.co_lnotab, co.co_freevars, co.co_cellvars)
+    args = [co.co_argcount, co.co_nlocals, co.co_stacksize, co.co_flags, co.co_code,
+            co.co_consts, co.co_names, co.co_varnames, co.co_filename, co.co_name,
+            co.co_firstlineno, co.co_lnotab, co.co_freevars, co.co_cellvars]
+    if PY3:
+        args.insert(1, co.co_kwonlyargcount)
+    co2 = types.CodeType(*args)
     #
     # then, we clone the function itself, using the new co2
     f2 = types.FunctionType(co2, f.__globals__, f.__name__, f.__defaults__, f.__closure__)
