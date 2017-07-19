@@ -1,5 +1,9 @@
 import sys
 from pypytools._fakecython import FakeCython
+from pypytools.util import PY3
+
+if PY3:
+    long = int
 
 class TestFakeCython:
 
