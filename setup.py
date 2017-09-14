@@ -7,7 +7,7 @@ desc = "A collection of useful tools to use PyPy-specific features, with CPython
 
 setup(
     name="pypytools",
-    version="0.3.3",
+    version="0.4.0",
     author="Antonio Cuni",
     author_email="anto.cuni@gmail.com",
     url="http://bitbucket.org/antocuni/pypytools/",
