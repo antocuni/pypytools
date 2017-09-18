@@ -70,6 +70,16 @@ if pypytools.IS_PYPY:
             return False
         return bool(asarray(a1 == a2).all())
 
+    PZERO = float('0.0')
+    NZERO = float('-0.0')
+    PINF = float('inf')
+    NINF = float('-inf')
+    NAN = float('nan')
+    euler_gamma = 0.577215664901532860606512090082402431 # from npy_math.h
+    Inf = inf = infty = Infinity = PINF
+    nan = NaN = NAN
+    from math import e, pi
+
     # generate wrappers for ndarray's methods
     def make_wrappers():
         from pypytools.codegen import Code
