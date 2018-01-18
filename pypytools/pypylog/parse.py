@@ -1,0 +1,69 @@
+import re
+
+# stolen from rpython/tool/logparse.py
+_color = "(?:\x1b.*?m)?"
+RE_START = re.compile(_color + r"\[([0-9a-fA-F]+)\] \{([\w-]+)" + _color + "$")
+RE_STOP  = re.compile(_color + r"\[([0-9a-fA-F]+)\] ([\w-]+)\}" + _color + "$")
+
+class ParseError(Exception):
+    pass
+
+
+class BaseParser(object):
+
+    def parse_line(self, line):
+        m = RE_START.match(line)
+        if m:
+            kind = 'start'
+        else:
+            m = RE_STOP.match(line)
+            if m:
+                kind = 'stop'
+            else:
+                # no start or stop
+                return None, None, None
+        #
+        timestamp = m.group(1)
+        name = m.group(2)
+        return kind, int(timestamp, 16), name
+
+    def feed(self, f):
+        for line in f:
+            if line == '\n':
+                continue
+            kind, ts, name = self.parse_line(line)
+            if kind == 'start':
+                self.start(ts, name)
+            elif kind == 'stop':
+                self.stop(ts, name)
+            elif kind is None:
+                self.line(line)
+            else:
+                assert False
+
+    def start(self, ts, name):
+        pass
+
+    def stop(self, ts, name):
+        pass
+
+    def line(self, line):
+        pass
+
+
+class FlatParser(BaseParser):
+
+    def __init__(self):
+        self.stack = []
+        self.result = []
+
+    def start(self, ts, name):
+        self.stack.append((ts, name))
+
+    def stop(self, ts, name):
+        start_ts, start_name = self.stack.pop()
+        if start_name != name:
+            msg = "End section does not match start: expected %s, got %s"
+            raise ParseError(msg % (start_name, name))
+        self.result.append((name, start_ts, ts))
+
