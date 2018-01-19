@@ -1,4 +1,5 @@
 import itertools
+from collections import defaultdict
 import numpy as np
 
 class PyPyLog(object):
@@ -6,12 +7,21 @@ class PyPyLog(object):
     def __init__(self):
         self._events = []
 
-    def add(self, section, start, end):
+    def add_event(self, section, start, end):
         self._events.append((section, start, end))
 
     def all_events(self):
         return self._events
 
+
+class GroupedPyPyLog(object):
+
+    def __init__(self):
+        self.sections = defaultdict(list)
+
+    def add_event(self, name, start, end):
+        self.sections[name].append((name, start, end))
+    
 
 
 class Series(object):

@@ -2,15 +2,14 @@ import pytest
 import textwrap
 from cStringIO import StringIO
 from pypytools.pypylog import parse
+from pypytools.pypylog import model
 
 class TestFlatParser(object):
 
-    def parse(self, log):
-        log = textwrap.dedent(log)
-        f = StringIO(log)
-        p = parse.FlatParser()
-        p.feed(f)
-        return p.result
+    def parse(self, text, log=None):
+        text = textwrap.dedent(text)
+        f = StringIO(text)
+        return parse.flat(f, log)
 
     def test_simple(self):
         log = self.parse("""
@@ -48,4 +47,26 @@ class TestFlatParser(object):
             ('bar', 0x200, 0x300),
             ('foo', 0x100, 0x400),
             ('baz', 0x500, 0x600)
+        ]
+
+    def test_GroupedPyPyLog(self):
+        text = """
+        [100] {foo
+        [200] foo}
+        [300] {bar
+        [400] bar}
+        [500] {bar
+        [600] bar}
+        [700] {foo
+        [800] foo}
+        """
+        log = self.parse(text, model.GroupedPyPyLog())
+        assert sorted(log.sections.keys()) == ['bar', 'foo']
+        assert log.sections['foo'] == [
+            ('foo', 0x100, 0x200),
+            ('foo', 0x700, 0x800)
+        ]
+        assert log.sections['bar'] == [
+            ('bar', 0x300, 0x400),
+            ('bar', 0x500, 0x600)
         ]

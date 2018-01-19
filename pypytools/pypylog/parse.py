@@ -54,9 +54,9 @@ class BaseParser(object):
 
 class FlatParser(BaseParser):
 
-    def __init__(self):
+    def __init__(self, log):
         self.stack = []
-        self.result = PyPyLog()
+        self.log = log
 
     def start(self, ts, name):
         self.stack.append((ts, name))
@@ -66,11 +66,19 @@ class FlatParser(BaseParser):
         if start_name != name:
             msg = "End section does not match start: expected %s, got %s"
             raise ParseError(msg % (start_name, name))
-        self.result.add(name, start_ts, ts)
+        self.log.add_event(name, start_ts, ts)
 
 
-def flat(fname):
-    p = FlatParser()
-    with open(fname) as f:
+def flat(fname, log=None):
+    def parse_file(f):
+        p = FlatParser(log)
         p.feed(f)
-    return p.result
+        return log
+    #
+    if log is None:
+        log = PyPyLog()
+    if isinstance(fname, basestring):
+        with open(fname) as f:
+            return parse_file(f)
+    else:
+        return parse_file(fname)
