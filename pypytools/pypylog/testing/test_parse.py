@@ -19,7 +19,7 @@ class TestFlatParser(object):
         [789] {bar
         [0ab] bar}
         """)
-        assert log == [
+        assert log.all_events() == [
             ('foo', 0x123, 0x456),
             ('bar', 0x789, 0x0ab)
         ]
@@ -44,7 +44,7 @@ class TestFlatParser(object):
         [500] {baz
         [600] baz}
         """)
-        assert log == [
+        assert log.all_events() == [
             ('bar', 0x200, 0x300),
             ('foo', 0x100, 0x400),
             ('baz', 0x500, 0x600)
