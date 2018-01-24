@@ -1,5 +1,5 @@
 import re
-from pypytools.pypylog.model import PyPyLog
+from pypytools.pypylog import model
 
 # stolen from rpython/tool/logparse.py
 _color = "(?:\x1b.*?m)?"
@@ -66,7 +66,8 @@ class FlatParser(BaseParser):
         if start_name != name:
             msg = "End section does not match start: expected %s, got %s"
             raise ParseError(msg % (start_name, name))
-        self.log.add_event(name, start_ts, ts)
+        ev = model.Event(name, start_ts, ts)
+        self.log.add_event(ev)
 
 
 def flat(fname, log=None):
@@ -76,7 +77,7 @@ def flat(fname, log=None):
         return log
     #
     if log is None:
-        log = PyPyLog()
+        log = model.PyPyLog()
     if isinstance(fname, basestring):
         with open(fname) as f:
             return parse_file(f)

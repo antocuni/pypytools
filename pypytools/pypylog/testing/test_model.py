@@ -24,8 +24,8 @@ class TestSeries(object):
 
 def test_make_step_chart():
     events = [
-        ('gc',  100, 120),
-        ('jit', 130, 135)
+        model.Event('gc',  100, 120),
+        model.Event('jit', 130, 135)
     ]
     s = model.make_step_chart(events)
     points = list(s)

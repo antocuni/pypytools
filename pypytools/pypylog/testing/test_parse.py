@@ -3,6 +3,7 @@ import textwrap
 from cStringIO import StringIO
 from pypytools.pypylog import parse
 from pypytools.pypylog import model
+from pypytools.pypylog.model import Event
 
 class TestFlatParser(object):
 
@@ -19,8 +20,8 @@ class TestFlatParser(object):
         [0ab] bar}
         """)
         assert log.all_events() == [
-            ('foo', 0x123, 0x456),
-            ('bar', 0x789, 0x0ab)
+            Event('foo', 0x123, 0x456),
+            Event('bar', 0x789, 0x0ab)
         ]
 
     def test_mismatch(self):
@@ -44,9 +45,9 @@ class TestFlatParser(object):
         [600] baz}
         """)
         assert log.all_events() == [
-            ('bar', 0x200, 0x300),
-            ('foo', 0x100, 0x400),
-            ('baz', 0x500, 0x600)
+            Event('bar', 0x200, 0x300),
+            Event('foo', 0x100, 0x400),
+            Event('baz', 0x500, 0x600)
         ]
 
     def test_GroupedPyPyLog(self):
@@ -63,10 +64,10 @@ class TestFlatParser(object):
         log = self.parse(text, model.GroupedPyPyLog())
         assert sorted(log.sections.keys()) == ['bar', 'foo']
         assert log.sections['foo'] == [
-            ('foo', 0x100, 0x200),
-            ('foo', 0x700, 0x800)
+            Event('foo', 0x100, 0x200),
+            Event('foo', 0x700, 0x800)
         ]
         assert log.sections['bar'] == [
-            ('bar', 0x300, 0x400),
-            ('bar', 0x500, 0x600)
+            Event('bar', 0x300, 0x400),
+            Event('bar', 0x500, 0x600)
         ]

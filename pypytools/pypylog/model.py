@@ -1,14 +1,22 @@
 import itertools
 from collections import defaultdict
+import attr
 import numpy as np
+
+@attr.s
+class Event(object):
+    section = attr.ib()
+    start = attr.ib()
+    end = attr.ib()
+
 
 class PyPyLog(object):
 
     def __init__(self):
         self._events = []
 
-    def add_event(self, section, start, end):
-        self._events.append((section, start, end))
+    def add_event(self, ev):
+        self._events.append(ev)
 
     def all_events(self):
         return self._events
@@ -19,9 +27,8 @@ class GroupedPyPyLog(object):
     def __init__(self):
         self.sections = defaultdict(list)
 
-    def add_event(self, name, start, end):
-        self.sections[name].append((name, start, end))
-    
+    def add_event(self, ev):
+        self.sections[ev.section].append(ev)
 
 
 class Series(object):
@@ -63,16 +70,16 @@ def make_step_chart(events):
     n = len(events)
     s = Series(n*6)
     i = 0
-    for name, start, end in events:
-        delta = end - start
-        s[i+0] = (start, 0)
-        s[i+1] = (start, delta)
+    for ev in events:
+        delta = ev.end - ev.start
+        s[i+0] = (ev.start, 0)
+        s[i+1] = (ev.start, delta)
         #
-        s[i+2] = (start, delta)
-        s[i+3] = (end, delta)
+        s[i+2] = (ev.start, delta)
+        s[i+3] = (ev.end, delta)
         #
-        s[i+4] = (end, delta)
-        s[i+5] = (end, 0)
+        s[i+4] = (ev.end, delta)
+        s[i+5] = (ev.end, 0)
         #
         i += 6
     #
