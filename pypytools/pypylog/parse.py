@@ -57,8 +57,11 @@ class FlatParser(BaseParser):
     def __init__(self, log):
         self.stack = []
         self.log = log
+        self.zero_ts = None
 
     def start(self, ts, name):
+        if self.zero_ts is None:
+            self.zero_ts = ts
         self.stack.append((ts, name))
 
     def stop(self, ts, name):
@@ -66,7 +69,7 @@ class FlatParser(BaseParser):
         if start_name != name:
             msg = "End section does not match start: expected %s, got %s"
             raise ParseError(msg % (start_name, name))
-        ev = model.Event(name, start_ts, ts)
+        ev = model.Event(name, start_ts-self.zero_ts, ts-self.zero_ts)
         self.log.add_event(ev)
 
 
