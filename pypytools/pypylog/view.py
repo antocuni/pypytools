@@ -12,17 +12,21 @@ class LogViewer(QtCore.QObject):
         self.global_config()
         self.log = parse.flat(fname, model.GroupedPyPyLog())
         self.app = pg.mkQApp()
-        self.win = pg.plot(title=fname)
-        self.win.addLegend()
+        # main window
+        self.win = pg.GraphicsWindow(title=fname)
         self.win.installEventFilter(self) # capture key presses
-        self.plot()
+        #
+        # main plot item, inside the window
+        self.plot_item = self.win.addPlot()
+        self.legend = self.plot_item.addLegend()
+        self.make_charts()
 
     @staticmethod
     def global_config():
         pg.setConfigOptions(antialias=True)
         pg.setConfigOptions(useOpenGL=True)
 
-    def plot(self):
+    def make_charts(self):
         colors = [
             '4D4D4D',
             '5DA5DA',
@@ -39,17 +43,17 @@ class LogViewer(QtCore.QObject):
                 continue
             color = colors[i % len(colors)]
             step_chart = model.make_step_chart(events)
-            self.win.plot(name=name,
-                          x=step_chart.X, y=step_chart.Y,
-                          connect='pairs',
-                          pen=color)
+            self.plot_item.plot(name=name,
+                                x=step_chart.X, y=step_chart.Y,
+                                connect='pairs',
+                                pen=color)
 
     def show(self):
         self.app.exec_()
 
     def eventFilter(self, source, event):
         # press ESC to quit
-        if event.type() == QtCore.QEvent.KeyPress and source is self.win:
+        if event.type() == QtCore.QEvent.KeyPress:
             if event.key() in (QtCore.Qt.Key_Escape, ord('Q')):
                 self.app.quit()
         return False
