@@ -8,6 +8,7 @@ class Event(object):
     section = attr.ib()
     start = attr.ib()
     end = attr.ib()
+    depth = attr.ib()
 
 
 class PyPyLog(object):
@@ -71,14 +72,14 @@ def make_step_chart(events):
     s = Series(n*6)
     i = 0
     for ev in events:
-        delta = ev.end - ev.start
+        h = ev.end - ev.start
         s[i+0] = (ev.start, 0)
-        s[i+1] = (ev.start, delta)
+        s[i+1] = (ev.start, h)
         #
-        s[i+2] = (ev.start, delta)
-        s[i+3] = (ev.end, delta)
+        s[i+2] = (ev.start, h)
+        s[i+3] = (ev.end, h)
         #
-        s[i+4] = (ev.end, delta)
+        s[i+4] = (ev.end, h)
         s[i+5] = (ev.end, 0)
         #
         i += 6

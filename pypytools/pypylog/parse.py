@@ -69,7 +69,8 @@ class FlatParser(BaseParser):
         if start_name != name:
             msg = "End section does not match start: expected %s, got %s"
             raise ParseError(msg % (start_name, name))
-        ev = model.Event(name, start_ts-self.zero_ts, ts-self.zero_ts)
+        depth = len(self.stack)
+        ev = model.Event(name, start_ts-self.zero_ts, ts-self.zero_ts, depth)
         self.log.add_event(ev)
 
 
