@@ -21,15 +21,15 @@ class LogViewer(QtCore.QObject):
         self.plot_item = self.win.addPlot()
         self.legend = self.plot_item.addLegend()
         self.make_charts()
-        #
-        # XXX: if we call this method, the program segfaults when exiting; not
-        # sure what is it about
-        self.make_legend_handlers()
+        self.add_legend_handlers()
 
     @staticmethod
     def global_config():
         pg.setConfigOptions(antialias=True)
         pg.setConfigOptions(useOpenGL=True)
+
+    def __del__(self):
+        self.remove_legend_handlers()
 
     def show(self):
         self.app.exec_()
@@ -63,7 +63,7 @@ class LogViewer(QtCore.QObject):
                                 connect='pairs',
                                 pen=color)
 
-    def make_legend_handlers(self):
+    def add_legend_handlers(self):
         # toggle visibility of plot by clicking on the legend
         for sample, label in self.legend.items:
             def clicked(ev, sample=sample, label=label):
@@ -77,6 +77,14 @@ class LogViewer(QtCore.QObject):
             #
             sample.mouseClickEvent = clicked
             label.mouseClickEvent = clicked
+
+    def remove_legend_handlers(self):
+        # delete the mouseClickEvent attributes which were added by
+        # add_legend_handlers: if we don't, we get a segfault during shutdown
+        # (not sure why)
+        for sample, label in self.legend.items:
+            del sample.mouseClickEvent
+            del label.mouseClickEvent
 
     def get_curve(self, name):
         for curve in self.plot_item.curves:
