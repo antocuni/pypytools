@@ -26,6 +26,43 @@ class LogViewer(QtCore.QObject):
         # sure what is it about
         self.make_legend_handlers()
 
+    @staticmethod
+    def global_config():
+        pg.setConfigOptions(antialias=True)
+        pg.setConfigOptions(useOpenGL=True)
+
+    def show(self):
+        self.app.exec_()
+
+    def eventFilter(self, source, event):
+        # press ESC to quit
+        if event.type() == QtCore.QEvent.KeyPress:
+            if event.key() in (QtCore.Qt.Key_Escape, ord('Q')):
+                self.app.quit()
+        return False
+
+    def make_charts(self):
+        colors = [
+            '4D4D4D',
+            '5DA5DA',
+            'FAA43A',
+            '60BD68',
+            'F17CB0',
+            'B2912F',
+            'B276B2',
+            'DECF3F',
+            'F15854',
+        ]
+        for i, (name, events) in enumerate(self.log.sections.iteritems()):
+            if name == 'jit-backend-dump':
+                continue
+            color = colors[i % len(colors)]
+            step_chart = model.make_step_chart(events)
+            self.plot_item.plot(name=name,
+                                x=step_chart.X, y=step_chart.Y,
+                                connect='pairs',
+                                pen=color)
+
     def make_legend_handlers(self):
         # toggle visibility of plot by clicking on the legend
         for sample, label in self.legend.items:
@@ -57,42 +94,6 @@ class LogViewer(QtCore.QObject):
             label.setOpacity(0.5)
             curve.hide()
 
-    @staticmethod
-    def global_config():
-        pg.setConfigOptions(antialias=True)
-        pg.setConfigOptions(useOpenGL=True)
-
-    def make_charts(self):
-        colors = [
-            '4D4D4D',
-            '5DA5DA',
-            'FAA43A',
-            '60BD68',
-            'F17CB0',
-            'B2912F',
-            'B276B2',
-            'DECF3F',
-            'F15854',
-        ]
-        for i, (name, events) in enumerate(self.log.sections.iteritems()):
-            if name == 'jit-backend-dump':
-                continue
-            color = colors[i % len(colors)]
-            step_chart = model.make_step_chart(events)
-            self.plot_item.plot(name=name,
-                                x=step_chart.X, y=step_chart.Y,
-                                connect='pairs',
-                                pen=color)
-
-    def show(self):
-        self.app.exec_()
-
-    def eventFilter(self, source, event):
-        # press ESC to quit
-        if event.type() == QtCore.QEvent.KeyPress:
-            if event.key() in (QtCore.Qt.Key_Escape, ord('Q')):
-                self.app.quit()
-        return False
 
 def main():
     viewer = LogViewer(sys.argv[1])
