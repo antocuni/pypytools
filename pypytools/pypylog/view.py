@@ -5,14 +5,16 @@ import pyqtgraph as pg
 from pypytools.pypylog import parse
 from pypytools.pypylog import model
 
-class LogViewer(object):
+class LogViewer(QtCore.QObject):
 
     def __init__(self, fname):
+        QtCore.QObject.__init__(self)
         self.global_config()
         self.log = parse.flat(fname, model.GroupedPyPyLog())
         self.app = pg.mkQApp()
         self.win = pg.plot(title=fname)
         self.win.addLegend()
+        self.win.installEventFilter(self) # capture key presses
         self.plot()
 
     @staticmethod
@@ -45,6 +47,12 @@ class LogViewer(object):
     def show(self):
         self.app.exec_()
 
+    def eventFilter(self, source, event):
+        # press ESC to quit
+        if event.type() == QtCore.QEvent.KeyPress and source is self.win:
+            if event.key() == QtCore.Qt.Key_Escape:
+                self.app.quit()
+        return False
 
 def main():
     viewer = LogViewer(sys.argv[1])
