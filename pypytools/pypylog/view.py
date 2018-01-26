@@ -50,7 +50,7 @@ class LogViewer(QtCore.QObject):
     def eventFilter(self, source, event):
         # press ESC to quit
         if event.type() == QtCore.QEvent.KeyPress and source is self.win:
-            if event.key() == QtCore.Qt.Key_Escape:
+            if event.key() in (QtCore.Qt.Key_Escape, ord('Q')):
                 self.app.quit()
         return False
 
