@@ -5,12 +5,43 @@ import pyqtgraph as pg
 from pypytools.pypylog import parse
 from pypytools.pypylog import model
 
+COLORS = {
+    'gc-set-nursery-size': None,
+    'gc-hardware': None,
+    'jit-summary': None,
+    'jit-abort-log': None,
+    'jit-disableinlining': None,
+    'jit-abort': None,
+    'jit-log-compiling-loop': None,
+    'jit-log-short-preamble': None,
+    'jit-log-opt-loop': None,
+    'jit-mem-collect': None,
+    'jit-abort-longest-function': None,
+    'jit-log-compiling-bridge': None,
+    'jit-log-noopt': None,
+
+    'gc-minor': '#f768a1',
+    'gc-minor-walkroots': '#c51b8a',
+    'gc-collect-step': '#7a0177',
+ 
+    'jit-log-opt-bridge': '#ffffd9',
+    'jit-mem-looptoken-alloc': '#edf8b1',
+    'jit-log-rewritten-bridge': '#c7e9b4',
+    'jit-backend-addr': '#7fcdbb',
+    'jit-trace-done': '#41b6c4',
+    'jit-backend-dump': None, # '#1d91c0',
+    'jit-optimize': '#225ea8',
+    'jit-backend': '#253494',
+    'jit-tracing': '#081d58',
+}
+
 class LogViewer(QtCore.QObject):
 
     def __init__(self, fname):
         QtCore.QObject.__init__(self)
         self.global_config()
         self.log = parse.flat(fname, model.GroupedPyPyLog())
+
         self.app = pg.mkQApp()
         # main window
         self.win = pg.GraphicsWindow(title=fname)
@@ -22,11 +53,14 @@ class LogViewer(QtCore.QObject):
         self.legend = self.plot_item.addLegend()
         self.make_charts()
         self.add_legend_handlers()
+        self.set_axes()
 
     @staticmethod
     def global_config():
         pg.setConfigOptions(antialias=True)
         pg.setConfigOptions(useOpenGL=True)
+        pg.setConfigOption('background', 0.95)
+        pg.setConfigOption('foreground', 'k')
 
     def __del__(self):
         self.remove_legend_handlers()
@@ -41,22 +75,17 @@ class LogViewer(QtCore.QObject):
                 self.app.quit()
         return False
 
+    def set_axes(self):
+        x_axis = self.plot_item.axes['bottom']['item']
+        y_axis = self.plot_item.axes['left']['item']
+        x_axis.setGrid(50)
+        y_axis.setGrid(50)
+
     def make_charts(self):
-        colors = [
-            '4D4D4D',
-            '5DA5DA',
-            'FAA43A',
-            '60BD68',
-            'F17CB0',
-            'B2912F',
-            'B276B2',
-            'DECF3F',
-            'F15854',
-        ]
         for i, (name, events) in enumerate(self.log.sections.iteritems()):
-            if name == 'jit-backend-dump':
+            color = COLORS[name]
+            if color is None:
                 continue
-            color = colors[i % len(colors)]
             step_chart = model.make_step_chart(events)
             self.plot_item.plot(name=name,
                                 x=step_chart.X, y=step_chart.Y,
