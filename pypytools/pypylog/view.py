@@ -41,7 +41,6 @@ class LogViewer(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.global_config()
         self.log = parse.flat(fname, model.GroupedPyPyLog())
-
         self.app = pg.mkQApp()
         # main window
         self.win = pg.GraphicsWindow(title=fname)
@@ -82,15 +81,18 @@ class LogViewer(QtCore.QObject):
         y_axis.setGrid(50)
 
     def make_charts(self):
-        for i, (name, events) in enumerate(self.log.sections.iteritems()):
+        sections = sorted(self.log.sections)
+        for i, name in enumerate(sections):
             color = COLORS[name]
             if color is None:
                 continue
+            events = self.log.sections[name]
             step_chart = model.make_step_chart(events)
+            pen = pg.mkPen(color, width=3)
             self.plot_item.plot(name=name,
                                 x=step_chart.X, y=step_chart.Y,
                                 connect='pairs',
-                                pen=color)
+                                pen=pen)
 
     def add_legend_handlers(self):
         # toggle visibility of plot by clicking on the legend
