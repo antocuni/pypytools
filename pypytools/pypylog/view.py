@@ -5,6 +5,9 @@ import pyqtgraph as pg
 from pypytools.pypylog import parse
 from pypytools.pypylog import model
 
+#PALETTE = ['#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3','#fdb462','#b3de69','#fccde5','#d9d9d9','#bc80bd','#ccebc5','#ffed6f']
+
+PALETTE = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928']
 COLORS = {
     'gc-set-nursery-size': None,
     'gc-hardware': None,
@@ -20,19 +23,19 @@ COLORS = {
     'jit-log-compiling-bridge': None,
     'jit-log-noopt': None,
 
-    'gc-minor': '#f768a1',
-    'gc-minor-walkroots': '#c51b8a',
-    'gc-collect-step': '#7a0177',
+    'gc-minor': PALETTE[0],
+    'gc-minor-walkroots': PALETTE[1],
+    'gc-collect-step': PALETTE[2],
  
-    'jit-log-opt-bridge': '#ffffd9',
-    'jit-mem-looptoken-alloc': '#edf8b1',
-    'jit-log-rewritten-bridge': '#c7e9b4',
-    'jit-backend-addr': '#7fcdbb',
-    'jit-trace-done': '#41b6c4',
-    'jit-backend-dump': None, # '#1d91c0',
-    'jit-optimize': '#225ea8',
-    'jit-backend': '#253494',
-    'jit-tracing': '#081d58',
+    'jit-log-opt-bridge': PALETTE[3],
+    'jit-mem-looptoken-alloc': PALETTE[4],
+    'jit-log-rewritten-bridge': PALETTE[5],
+    'jit-backend-addr': PALETTE[6],
+    'jit-trace-done': PALETTE[7],
+    'jit-backend-dump': None, # PALETTE[8],
+    'jit-optimize': PALETTE[9],
+    'jit-backend': PALETTE[10],
+    'jit-tracing': PALETTE[11],
 }
 
 class LogViewer(QtCore.QObject):
@@ -58,8 +61,8 @@ class LogViewer(QtCore.QObject):
     def global_config():
         pg.setConfigOptions(antialias=True)
         pg.setConfigOptions(useOpenGL=True)
-        pg.setConfigOption('background', 0.95)
-        pg.setConfigOption('foreground', 'k')
+        ## pg.setConfigOption('background', 0.95)
+        ## pg.setConfigOption('foreground', 'k')
 
     def __del__(self):
         self.remove_legend_handlers()
