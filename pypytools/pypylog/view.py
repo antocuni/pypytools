@@ -26,7 +26,8 @@ COLORS = {
     'gc-minor': PALETTE[0],
     'gc-minor-walkroots': PALETTE[1],
     'gc-collect-step': PALETTE[2],
- 
+    'gc-collect-done': None, # PALETTE[3],
+
     'jit-log-opt-bridge': PALETTE[3],
     'jit-mem-looptoken-alloc': PALETTE[4],
     'jit-log-rewritten-bridge': PALETTE[5],
@@ -44,6 +45,7 @@ class LogViewer(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.global_config()
         self.log = parse.flat(fname, model.GroupedPyPyLog())
+        #self.log.print_summary()
         self.app = pg.mkQApp()
         # main window
         self.win = pg.GraphicsWindow(title=fname)

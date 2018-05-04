@@ -31,6 +31,14 @@ class GroupedPyPyLog(object):
     def add_event(self, ev):
         self.sections[ev.section].append(ev)
 
+    def print_summary(self):
+        for name, events in self.sections.iteritems():
+            total = 0
+            for ev in events:
+                delta = ev.end - ev.start
+                assert delta >= 0
+                total += delta
+            print '%20s %6d %8d' % (name, len(events), delta)
 
 class Series(object):
 
