@@ -20,8 +20,8 @@ class TestFlatParser(object):
         [ff789] bar}
         """)
         assert log.all_events() == [
-            Event('foo', 0x000, 0x123, depth=0),
-            Event('bar', 0x456, 0x789, depth=0)
+            Event('foo', 0x000, 0x123),
+            Event('bar', 0x456, 0x789)
         ]
 
     def test_mismatch(self):
@@ -45,9 +45,9 @@ class TestFlatParser(object):
         [ff600] baz}
         """)
         assert log.all_events() == [
-            Event('bar', 0x200, 0x300, depth=1),
-            Event('foo', 0x000, 0x400, depth=0),
-            Event('baz', 0x500, 0x600, depth=0)
+            Event('bar', 0x200, 0x300),
+            Event('foo', 0x000, 0x400),
+            Event('baz', 0x500, 0x600)
         ]
 
     def test_GroupedPyPyLog(self):
@@ -64,13 +64,14 @@ class TestFlatParser(object):
         log = self.parse(text, model.GroupedPyPyLog())
         assert sorted(log.sections.keys()) == ['bar', 'foo']
         assert log.sections['foo'] == [
-            Event('foo', 0x000, 0x200, depth=0),
-            Event('foo', 0x700, 0x800, depth=0)
+            Event('foo', 0x000, 0x200),
+            Event('foo', 0x700, 0x800)
         ]
         assert log.sections['bar'] == [
-            Event('bar', 0x300, 0x400, depth=0),
-            Event('bar', 0x500, 0x600, depth=0)
+            Event('bar', 0x300, 0x400),
+            Event('bar', 0x500, 0x600)
         ]
+
 
 
 def test_parse_frequency():

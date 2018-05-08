@@ -8,12 +8,12 @@ class Event(object):
     section = attr.ib()
     start = attr.ib()
     end = attr.ib()
-    depth = attr.ib()
 
     def as_point(self):
         x = self.start
         y = self.end - self.start
         return x, y
+
 
 class PyPyLog(object):
 

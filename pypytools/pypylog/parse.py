@@ -1,4 +1,5 @@
 import re
+import attr
 from pypytools.pypylog import model
 
 # stolen from rpython/tool/logparse.py
@@ -10,10 +11,33 @@ class ParseError(Exception):
     pass
 
 
+@attr.s
+class Section(object):
+    name = attr.ib()
+    start = attr.ib()
+    stop = attr.ib(default=None)
+    lines = attr.ib(default=attr.Factory(list))
+
 class BaseParser(object):
 
-    def __init__(self, freq):
+    def __init__(self, log, freq):
+        self.log = log
         self.freq = freq
+
+    @classmethod
+    def from_file(cls, fname, log=None, freq=1):
+        def parse_file(f):
+            p = cls(log, freq)
+            p.feed(f)
+            return log
+        #
+        if log is None:
+            log = model.PyPyLog()
+        if isinstance(fname, basestring):
+            with open(fname) as f:
+                return parse_file(f)
+        else:
+            return parse_file(fname)
 
     def parse_line(self, line):
         m = RE_START.match(line)
@@ -35,65 +59,44 @@ class BaseParser(object):
         return int(ts, 16) / self.freq
 
     def feed(self, f):
+        zero_ts = None
+        stack = []
         for line in f:
             if line == '\n':
                 continue
             kind, ts, name = self.parse_line(line)
+            if zero_ts is None:
+                zero_ts = ts
             if kind == 'start':
-                self.start(ts, name)
+                stack.append(Section(name, start=ts-zero_ts))
             elif kind == 'stop':
-                self.stop(ts, name)
+                if name != stack[-1].name:
+                    msg = "End section does not match start: expected %s, got %s"
+                    raise ParseError(msg % (stack[-1].name, name))
+                stack[-1].stop = ts - zero_ts
+                self.section(stack[-1])
+                stack.pop()
             elif kind is None:
-                self.line(line)
+                stack[-1].lines.append(line)
             else:
                 assert False
 
-    def start(self, ts, name):
-        pass
-
-    def stop(self, ts, name):
-        pass
-
-    def line(self, line):
+    def section(self, s):
         pass
 
 
 class FlatParser(BaseParser):
 
     def __init__(self, log, freq=1):
-        BaseParser.__init__(self, freq)
-        self.stack = []
-        self.log = log
-        self.zero_ts = None
+        BaseParser.__init__(self, log, freq)
 
-    def start(self, ts, name):
-        if self.zero_ts is None:
-            self.zero_ts = ts
-        self.stack.append((ts, name))
-
-    def stop(self, ts, name):
-        start_ts, start_name = self.stack.pop()
-        if start_name != name:
-            msg = "End section does not match start: expected %s, got %s"
-            raise ParseError(msg % (start_name, name))
-        depth = len(self.stack)
-        ev = model.Event(name, start_ts-self.zero_ts, ts-self.zero_ts, depth)
+    def section(self, s):
+        ev = model.Event(s.name, s.start, s.stop)
         self.log.add_event(ev)
 
 
-def flat(fname, log=None, freq=1):
-    def parse_file(f):
-        p = FlatParser(log, freq)
-        p.feed(f)
-        return log
-    #
-    if log is None:
-        log = model.PyPyLog()
-    if isinstance(fname, basestring):
-        with open(fname) as f:
-            return parse_file(f)
-    else:
-        return parse_file(fname)
+
+flat = FlatParser.from_file
 
 
 def parse_frequency(s):
