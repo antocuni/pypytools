@@ -36,7 +36,7 @@ COLORS = {
 
     'gc-minor': PALETTE[0],
     'gc-minor-walkroots': None, # PALETTE[1],
-    'gc-collect-step': PALETTE[2],
+    'gc-collect-step': '#FF0000', #PALETTE[2],
     'gc-collect-done': PALETTE[1],
 
     'jit-log-opt-bridge': PALETTE[3],
