@@ -151,7 +151,9 @@ class LogViewer(QtCore.QObject):
 
     def add_legend_handlers(self):
         # toggle visibility of plot by clicking on the legend
-        for sample, label in self.time_legend.items:
+        items = (self.time_legend.items +
+                 self.mem_legend.items)
+        for sample, label in items:
             def clicked(ev, sample=sample, label=label):
                 name = label.text
                 curve = self.get_curve(name)
@@ -168,12 +170,16 @@ class LogViewer(QtCore.QObject):
         # delete the mouseClickEvent attributes which were added by
         # add_legend_handlers: if we don't, we get a segfault during shutdown
         # (not sure why)
-        for sample, label in self.time_legend.items:
+        items = (self.time_legend.items +
+                 self.mem_legend.items)
+        for sample, label in items:
             del sample.mouseClickEvent
             del label.mouseClickEvent
 
     def get_curve(self, name):
-        for curve in self.time_plot.curves:
+        curves = (self.time_plot.curves +
+                  self.mem_plot.curves)
+        for curve in curves:
             if curve.name() == name:
                 return curve
         return None
