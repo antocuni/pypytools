@@ -24,9 +24,9 @@ COLORS = {
     'jit-log-noopt': None,
 
     'gc-minor': PALETTE[0],
-    'gc-minor-walkroots': PALETTE[1],
+    'gc-minor-walkroots': None, # PALETTE[1],
     'gc-collect-step': PALETTE[2],
-    'gc-collect-done': None, # PALETTE[3],
+    'gc-collect-done': PALETTE[1],
 
     'jit-log-opt-bridge': PALETTE[3],
     'jit-mem-looptoken-alloc': PALETTE[4],
@@ -41,10 +41,11 @@ COLORS = {
 
 class LogViewer(QtCore.QObject):
 
-    def __init__(self, fname):
+    def __init__(self, fname, chart_type='dot'):
         QtCore.QObject.__init__(self)
         self.global_config()
         self.log = parse.flat(fname, model.GroupedPyPyLog())
+        self.chart_type = chart_type
         #self.log.print_summary()
         self.app = pg.mkQApp()
         # main window
@@ -92,12 +93,25 @@ class LogViewer(QtCore.QObject):
             if color is None:
                 continue
             events = self.log.sections[name]
+            self.make_one_chart(self.chart_type, name, color, events)
+
+    def make_one_chart(self, t, name, color, events):
+        if t == 'step':
             step_chart = model.make_step_chart(events)
             pen = pg.mkPen(color, width=3)
             self.plot_item.plot(name=name,
-                                x=step_chart.X, y=step_chart.Y,
+                                x=step_chart.X,
+                                y=step_chart.Y,
                                 connect='pairs',
                                 pen=pen)
+        elif t == 'dot':
+            pen = pg.mkPen(color)
+            brush = pg.mkBrush(color)
+            s = model.Series.from_points([ev.as_point() for ev in events])
+            self.plot_item.scatterPlot(name=name, x=s.X, y=s.Y, size=2,
+                                       pen=pen, brush=brush)
+        else:
+            raise ValueError('Unknown char type: %s' % t)
 
     def add_legend_handlers(self):
         # toggle visibility of plot by clicking on the legend
@@ -140,10 +154,8 @@ class LogViewer(QtCore.QObject):
 
 
 def main():
-    viewer = LogViewer(sys.argv[1])
+    viewer = LogViewer(sys.argv[1], 'dot')
     viewer.show()
-
-
 
 if __name__ == '__main__':
     main()

@@ -10,6 +10,10 @@ class Event(object):
     end = attr.ib()
     depth = attr.ib()
 
+    def as_point(self):
+        x = self.start
+        y = self.end - self.start
+        return x, y
 
 class PyPyLog(object):
 
@@ -80,7 +84,7 @@ def make_step_chart(events):
     s = Series(n*6)
     i = 0
     for ev in events:
-        h = ev.end - ev.start
+        _, h = ev.as_point()
         s[i+0] = (ev.start, 0)
         s[i+1] = (ev.start, h)
         #

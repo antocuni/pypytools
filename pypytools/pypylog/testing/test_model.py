@@ -1,5 +1,12 @@
 from pypytools.pypylog import model
 
+class TestEvent(object):
+
+    def test_as_point(self):
+        ev = model.Event('foo', 5, 15, 0)
+        assert ev.as_point() == (5, 10)
+
+
 class TestSeries(object):
 
     def test_from_points(self):
