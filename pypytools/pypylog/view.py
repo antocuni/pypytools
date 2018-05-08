@@ -38,6 +38,7 @@ COLORS = {
     'gc-minor-walkroots': None, # PALETTE[1],
     'gc-collect-step': '#FF0000', #PALETTE[2],
     'gc-collect-done': PALETTE[1],
+    'gc-minor memory': PALETTE[2],
 
     'jit-log-opt-bridge': PALETTE[3],
     'jit-mem-looptoken-alloc': PALETTE[4],
@@ -55,7 +56,7 @@ class LogViewer(QtCore.QObject):
     def __init__(self, fname, chart_type, freq):
         QtCore.QObject.__init__(self)
         self.global_config()
-        self.log = parse.flat(fname, model.GroupedPyPyLog(), freq)
+        self.log = parse.gc(fname, model.GroupedPyPyLog(), freq)
         self.chart_type = chart_type
         self.log.print_summary()
         self.app = pg.mkQApp()
@@ -64,9 +65,22 @@ class LogViewer(QtCore.QObject):
         self.win.installEventFilter(self) # capture key presses
         self.scene = self.win.scene()
         #
-        # main plot item, inside the window
-        self.plot_item = self.win.addPlot()
-        self.legend = self.plot_item.addLegend()
+        # plot items, inside the window: we have a different plot item for
+        # each Y axis (e.g., one for plotting time and another for potting
+        # memory).
+        #
+        # we create plot_time for last: it's the one which is controlled by
+        # dragging the mouse
+        self.mem_plot = self.win.addPlot(0, 0)
+        self.time_plot = self.win.addPlot(0, 0)
+        #
+        self.mem_plot.setXLink(self.time_plot)
+        self.mem_plot.showAxis('left', False)
+        self.mem_plot.showAxis('right')
+
+        #
+        self.time_legend = self.time_plot.addLegend()
+        self.mem_legend = self.mem_plot.addLegend(offset=(-30, 30))
         self.make_charts()
         self.add_legend_handlers()
         self.set_axes()
@@ -92,8 +106,8 @@ class LogViewer(QtCore.QObject):
         return False
 
     def set_axes(self):
-        x_axis = self.plot_item.axes['bottom']['item']
-        y_axis = self.plot_item.axes['left']['item']
+        x_axis = self.time_plot.axes['bottom']['item']
+        y_axis = self.time_plot.axes['left']['item']
         x_axis.setGrid(50)
         y_axis.setGrid(50)
 
@@ -105,12 +119,23 @@ class LogViewer(QtCore.QObject):
                 continue
             events = self.log.sections[name]
             self.make_one_chart(self.chart_type, name, color, events)
+        #
+        self.make_gc_minor_mem()
+
+    def make_gc_minor_mem(self):
+        name = 'gc-minor memory'
+        color = COLORS[name]
+        events = self.log.sections['gc-minor']
+        s = model.Series(len(events))
+        for i, ev in enumerate(events):
+            s[i] = ev.start, ev.memory
+        self.mem_plot.plot(name=name, x=s.X, y=s.Y, pen=pg.mkPen(color))
 
     def make_one_chart(self, t, name, color, events):
         if t == 'step':
             step_chart = model.make_step_chart(events)
             pen = pg.mkPen(color, width=3)
-            self.plot_item.plot(name=name,
+            self.time_plot.plot(name=name,
                                 x=step_chart.X,
                                 y=step_chart.Y,
                                 connect='pairs',
@@ -119,14 +144,14 @@ class LogViewer(QtCore.QObject):
             pen = pg.mkPen(color)
             brush = pg.mkBrush(color)
             s = model.Series.from_points([ev.as_point() for ev in events])
-            self.plot_item.scatterPlot(name=name, x=s.X, y=s.Y, size=2,
+            self.time_plot.scatterPlot(name=name, x=s.X, y=s.Y, size=2,
                                        pen=pen, brush=brush)
         else:
             raise ValueError('Unknown char type: %s' % t)
 
     def add_legend_handlers(self):
         # toggle visibility of plot by clicking on the legend
-        for sample, label in self.legend.items:
+        for sample, label in self.time_legend.items:
             def clicked(ev, sample=sample, label=label):
                 name = label.text
                 curve = self.get_curve(name)
@@ -143,12 +168,12 @@ class LogViewer(QtCore.QObject):
         # delete the mouseClickEvent attributes which were added by
         # add_legend_handlers: if we don't, we get a segfault during shutdown
         # (not sure why)
-        for sample, label in self.legend.items:
+        for sample, label in self.time_legend.items:
             del sample.mouseClickEvent
             del label.mouseClickEvent
 
     def get_curve(self, name):
-        for curve in self.plot_item.curves:
+        for curve in self.time_plot.curves:
             if curve.name() == name:
                 return curve
         return None
