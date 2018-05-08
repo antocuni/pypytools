@@ -19,6 +19,7 @@ class Section(object):
     lines = attr.ib(default=attr.Factory(list))
 
 class BaseParser(object):
+    COLLECT_LINES = None
 
     def __init__(self, log, freq):
         self.log = log
@@ -77,7 +78,8 @@ class BaseParser(object):
                 self.section(stack[-1])
                 stack.pop()
             elif kind is None:
-                stack[-1].lines.append(line)
+                if self.COLLECT_LINES:
+                    stack[-1].lines.append(line)
             else:
                 assert False
 
@@ -95,9 +97,30 @@ class FlatParser(BaseParser):
         self.log.add_event(ev)
 
 
+class GcParser(FlatParser):
+    COLLECT_LINES = True
+    RE_MINOR = re.compile('minor collect, total memory used: ([0-9]*)')
+
+    def section(self, s):
+        name = 'on_%s' % (s.name.replace('-', '_'))
+        meth = getattr(self, name, None)
+        if meth:
+            meth(s)
+        else:
+            FlatParser.section(self, s)
+
+    def on_gc_minor(self, s):
+        memory = None
+        for line in s.lines:
+            m = self.RE_MINOR.match(line)
+            if m:
+                memory = int(m.group(1))
+        ev = model.GcMinor(s.name, s.start, s.stop, memory=memory)
+        self.log.add_event(ev)
+
 
 flat = FlatParser.from_file
-
+gc = GcParser.from_file
 
 def parse_frequency(s):
     """

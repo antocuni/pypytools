@@ -3,7 +3,7 @@ import textwrap
 from cStringIO import StringIO
 from pypytools.pypylog import parse
 from pypytools.pypylog import model
-from pypytools.pypylog.model import Event
+from pypytools.pypylog.model import Event, GcMinor
 
 class TestFlatParser(object):
 
@@ -72,6 +72,34 @@ class TestFlatParser(object):
             Event('bar', 0x500, 0x600)
         ]
 
+
+class TestGcParser(object):
+    
+    def parse(self, text, log=None):
+        text = textwrap.dedent(text)
+        f = StringIO(text)
+        return parse.gc(f, log)
+
+    def test_gc_minor(self):
+        text = """
+        [ff000] {gc-minor
+        [ff001] {gc-minor-walkroots
+        [ff002] gc-minor-walkroots}
+        minor collect, total memory used: 1000
+        number of pinned objects: 0
+        [ff100] gc-minor}
+        [ff200] {gc-minor
+        [ff201] {gc-minor-walkroots
+        [ff202] gc-minor-walkroots}
+        minor collect, total memory used: 2000
+        number of pinned objects: 0
+        [ff300] gc-minor}
+        """
+        log = self.parse(text, model.GroupedPyPyLog())
+        assert log.sections['gc-minor'] == [
+            GcMinor('gc-minor', 0x000, 0x100, memory=1000),
+            GcMinor('gc-minor', 0x200, 0x300, memory=2000),
+        ]
 
 
 def test_parse_frequency():

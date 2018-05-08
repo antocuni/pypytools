@@ -14,6 +14,10 @@ class Event(object):
         y = self.end - self.start
         return x, y
 
+@attr.s
+class GcMinor(Event):
+    memory = attr.ib(default=None)
+
 
 class PyPyLog(object):
 
