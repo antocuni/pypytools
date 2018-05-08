@@ -2,8 +2,10 @@
 Usage: view FILE [options]
 
 Options:
-  --dot        Plot the events as dots [default: True]
-  --step       Plot the events as steps
+  --dot             Plot the events as dots [default: True]
+  --step            Plot the events as steps
+  --tsc-freq=FREQ   Convert the TSC counter to seconds with the specified
+                    frequency [default: 1]
 """
 
 import sys
@@ -50,12 +52,12 @@ COLORS = {
 
 class LogViewer(QtCore.QObject):
 
-    def __init__(self, fname, chart_type='dot'):
+    def __init__(self, fname, chart_type, freq):
         QtCore.QObject.__init__(self)
         self.global_config()
-        self.log = parse.flat(fname, model.GroupedPyPyLog())
+        self.log = parse.flat(fname, model.GroupedPyPyLog(), freq)
         self.chart_type = chart_type
-        #self.log.print_summary()
+        self.log.print_summary()
         self.app = pg.mkQApp()
         # main window
         self.win = pg.GraphicsWindow(title=fname)
@@ -167,7 +169,8 @@ def main(argv=None):
     chart_type = 'dot'
     if args['--step']:
         chart_type = 'step'
-    viewer = LogViewer(args['FILE'], chart_type)
+    freq = parse.parse_frequency(args['--tsc-freq'])
+    viewer = LogViewer(args['FILE'], chart_type, freq)
     viewer.show()
 
 if __name__ == '__main__':

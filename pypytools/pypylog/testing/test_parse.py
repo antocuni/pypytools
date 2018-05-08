@@ -71,3 +71,16 @@ class TestFlatParser(object):
             Event('bar', 0x300, 0x400, depth=0),
             Event('bar', 0x500, 0x600, depth=0)
         ]
+
+
+def test_parse_frequency():
+    pf = parse.parse_frequency
+    assert pf('40') == 40
+    assert pf('40hz') == 40
+    assert pf('40Hz') == 40
+    assert pf('40 Hz') == 40
+    assert pf('40 Hz ') == 40
+    assert pf('40 KHz') == 40e3
+    assert pf('40 MHz') == 40e6
+    assert pf('40 GHz') == 40e9
+    pytest.raises(ValueError, "pf('')")
