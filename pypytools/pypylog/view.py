@@ -1,4 +1,13 @@
+"""
+Usage: view FILE [options]
+
+Options:
+  --dot        Plot the events as dots [default: True]
+  --step       Plot the events as steps
+"""
+
 import sys
+import docopt
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
 import pyqtgraph as pg
@@ -153,8 +162,12 @@ class LogViewer(QtCore.QObject):
             curve.hide()
 
 
-def main():
-    viewer = LogViewer(sys.argv[1], 'dot')
+def main(argv=None):
+    args = docopt.docopt(__doc__, argv=argv)
+    chart_type = 'dot'
+    if args['--step']:
+        chart_type = 'step'
+    viewer = LogViewer(args['FILE'], chart_type)
     viewer.show()
 
 if __name__ == '__main__':

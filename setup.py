@@ -1,4 +1,4 @@
-#   Copyright 2015 Antonio Cuni anto.cuni@gmail.com
+#   Copyright 2015-2018 Antonio Cuni anto.cuni@gmail.com
 
 from setuptools import setup
 
