@@ -94,10 +94,14 @@ class LogViewer(QtCore.QObject):
         self.mem_plot = self.win.addPlot(0, 0)
         self.time_plot = self.win.addPlot(0, 0)
         #
+        self.time_plot.setLabel('left', 'Time', 's')
+        self.time_plot.setLabel('bottom', 'Time', 's')
+        self.time_plot.getAxis('bottom').enableAutoSIPrefix(False)
+        #
         self.mem_plot.setXLink(self.time_plot)
         self.mem_plot.showAxis('left', False)
+        self.mem_plot.showAxis('bottom', False)
         self.mem_plot.showAxis('right')
-        self.time_plot.setLabel('left', 'Time', 's')
         self.mem_plot.setLabel('right', 'Memory', 'B')
         #
         self.time_legend = self.time_plot.addLegend()
