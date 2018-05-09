@@ -132,8 +132,26 @@ class LogViewer(QtCore.QObject):
             s[i] = ev.start, ev.memory
         self.mem_plot.plot(name=name, x=s.X, y=s.Y, pen=pg.mkPen(color))
 
+    def make_gc_collect_step(self, name, color):
+        # we want to draw a plot, but also make sure that points are
+        # disconnected after the gc-collect-done
+        pen = pg.mkPen(color)
+        steps = self.log.sections['gc-collect-step']
+        dones = self.log.sections['gc-collect-done']
+        all_events = steps + dones
+        all_events.sort(key=lambda ev: ev.start)
+        s = model.Series(len(all_events))
+        for i, ev in enumerate(all_events):
+            if ev.section == 'gc-collect-step':
+                s[i] = ev.as_point()
+            else:
+                s[i] = ev.start, float('nan')
+        self.time_plot.plot(name=name, x=s.X, y=s.Y, pen=pen, connect='finite')
+
     def make_one_chart(self, t, name, color, events):
-        if t == 'step':
+        if name == 'gc-collect-step':
+            self.make_gc_collect_step(name, color)
+        elif t == 'step':
             step_chart = model.make_step_chart(events)
             pen = pg.mkPen(color, width=3)
             self.time_plot.plot(name=name,
@@ -144,8 +162,9 @@ class LogViewer(QtCore.QObject):
         elif t == 'dot':
             pen = pg.mkPen(color)
             brush = pg.mkBrush(color)
+            size = 2
             s = model.Series.from_points([ev.as_point() for ev in events])
-            self.time_plot.scatterPlot(name=name, x=s.X, y=s.Y, size=2,
+            self.time_plot.scatterPlot(name=name, x=s.X, y=s.Y, size=size,
                                        pen=pen, brush=brush)
         else:
             raise ValueError('Unknown char type: %s' % t)
