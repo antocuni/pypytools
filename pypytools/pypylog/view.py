@@ -16,40 +16,60 @@ import pyqtgraph as pg
 from pypytools.pypylog import parse
 from pypytools.pypylog import model
 
-#PALETTE = ['#8dd3c7','#ffffb3','#bebada','#fb8072','#80b1d3','#fdb462','#b3de69','#fccde5','#d9d9d9','#bc80bd','#ccebc5','#ffed6f']
+def make_palette(n):
+    """
+    Manually run this function if you want to tweak the color
+    palette. Normally, the palette is hard-coded, to avoid a dependency on
+    matplotlib and seaborn
+    """
+    from matplotlib.colors import to_hex
+    import seaborn as sns
+    #palette = sns.hls_palette(n)
+    palette = sns.color_palette("Set1", n)
+    #palette = sns.color_palette("Dark2", n)
+    hex_palette = [str(to_hex(c)) for c in palette]
+    print 'PALETTE = %r # %d colors' % (hex_palette, n)
+    return hex_palette
+    ## import matplotlib
+    ## sns.palplot(PALETTE)
+    ## matplotlib.pyplot.show()
 
-PALETTE = ['#a6cee3','#1f78b4','#b2df8a','#33a02c','#fb9a99','#e31a1c','#fdbf6f','#ff7f00','#cab2d6','#6a3d9a','#ffff99','#b15928']
+PALETTE = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628'] # 7 colors
+#PALETTE = make_palette(7)
+
 COLORS = {
-    'gc-set-nursery-size': None,
-    'gc-hardware': None,
-    'jit-summary': None,
-    'jit-abort-log': None,
-    'jit-disableinlining': None,
-    'jit-abort': None,
-    'jit-log-compiling-loop': None,
-    'jit-log-short-preamble': None,
-    'jit-log-opt-loop': None,
-    'jit-mem-collect': None,
-    'jit-abort-longest-function': None,
-    'jit-log-compiling-bridge': None,
-    'jit-log-noopt': None,
-
     'gc-minor': PALETTE[0],
-    'gc-minor-walkroots': None,
     'gc-collect-step': PALETTE[1],
-    'gc-collect-done': None,
     'gc-minor memory': PALETTE[2],
 
-    'jit-log-opt-bridge': PALETTE[3],
-    'jit-mem-looptoken-alloc': PALETTE[4],
-    'jit-log-rewritten-bridge': PALETTE[5],
-    'jit-backend-addr': PALETTE[6],
-    'jit-trace-done': PALETTE[7],
-    'jit-backend-dump': None, # PALETTE[8],
-    'jit-optimize': PALETTE[9],
-    'jit-backend': PALETTE[10],
-    'jit-tracing': PALETTE[11],
+    'jit-optimize': PALETTE[3],
+    'jit-backend': PALETTE[4],
+    'jit-tracing': PALETTE[5],
+    'jit-mem-collect': PALETTE[6],
+
+    # uninteresting sections
+    'gc-collect-done': None,
+    'gc-hardware': None,
+    'gc-minor-walkroots': None,
+    'gc-set-nursery-size': None,
+    'jit-abort': None,
+    'jit-abort-log': None,
+    'jit-abort-longest-function': None,
+    'jit-backend-addr': None,
+    'jit-backend-dump': None,
+    'jit-disableinlining': None,
+    'jit-log-compiling-bridge': None,
+    'jit-log-compiling-loop': None,
+    'jit-log-noopt': None,
+    'jit-log-opt-bridge': None,
+    'jit-log-opt-loop': None,
+    'jit-log-rewritten-bridge': None,
+    'jit-log-short-preamble': None,
+    'jit-mem-looptoken-alloc': None,
+    'jit-summary': None,
+    'jit-trace-done': None,
 }
+
 
 class LogViewer(QtCore.QObject):
 
@@ -90,7 +110,7 @@ class LogViewer(QtCore.QObject):
     def global_config():
         pg.setConfigOptions(antialias=True)
         pg.setConfigOptions(useOpenGL=True)
-        ## pg.setConfigOption('background', 0.95)
+        pg.setConfigOption('background', 0.1)
         ## pg.setConfigOption('foreground', 'k')
 
     def __del__(self):
