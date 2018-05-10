@@ -5,11 +5,12 @@ Options:
   --dot             Plot the events as dots [default: True]
   --step            Plot the events as steps
   --tsc-freq=FREQ   Convert the TSC counter to seconds with the specified
-                    frequency [default: 1]
+                    frequency [default: auto]
 """
 
 import sys
 import docopt
+import cpuinfo
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
 import pyqtgraph as pg
@@ -238,13 +239,19 @@ class LogViewer(QtCore.QObject):
             label.setOpacity(0.5)
             curve.hide()
 
+def get_frequency(freq):
+    if freq == 'auto':
+        freq = cpuinfo.get_cpu_info()['hz_advertised_raw'][0] # Hz
+        return float(freq)
+    else:
+        return parse.parse_frequency(freq)
 
 def main(argv=None):
     args = docopt.docopt(__doc__, argv=argv)
     chart_type = 'dot'
     if args['--step']:
         chart_type = 'step'
-    freq = parse.parse_frequency(args['--tsc-freq'])
+    freq = get_frequency(args['--tsc-freq'])
     viewer = LogViewer(args['FILE'], chart_type, freq)
     viewer.show()
 
