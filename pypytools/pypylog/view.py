@@ -9,6 +9,7 @@ Options:
 """
 
 import sys
+from collections import defaultdict
 import docopt
 import cpuinfo
 from pyqtgraph.Qt import QtGui, QtCore
@@ -70,6 +71,13 @@ COLORS = {
     'jit-summary': None,
     'jit-trace-done': None,
 }
+
+COLORS.update({
+    'SCANNING': '#00FF00',
+    'MARKING': '#FFFFFF',
+    'SWEEPING': '#FFFF00',
+    'FINALIZING': '#FF00FF',
+    })
 
 
 class LogViewer(QtCore.QObject):
@@ -167,6 +175,7 @@ class LogViewer(QtCore.QObject):
         NaN = float('NaN')
         points = []
         last_ev = None
+        phases = defaultdict(list)
         for ev in steps:
             if (last_ev and last_ev.phase == 'FINALIZING' and
                 ev.phase == 'SCANNING'):
@@ -174,8 +183,19 @@ class LogViewer(QtCore.QObject):
                 points.append((ev.start, NaN))
             points.append(ev.as_point())
             last_ev = ev
+            phases[ev.phase].append(ev)
         s = model.Series.from_points(points)
         self.time_plot.plot(name=name, x=s.X, y=s.Y, pen=pen, connect='finite')
+        #
+        # draw points of different colors for each distinct phase
+        size = 3
+        for phase in ('SCANNING', 'MARKING', 'SWEEPING', 'FINALIZING'):
+            s = model.Series.from_events(phases[phase])
+            color = COLORS[phase]
+            pen = pg.mkPen(color)
+            brush = pg.mkBrush(color)
+            self.time_plot.scatterPlot(name=phase, x=s.X, y=s.Y, size=size,
+                                       pen=pen, brush=brush)
 
     def make_one_chart(self, t, name, color, events):
         if name == 'gc-collect-step':

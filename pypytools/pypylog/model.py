@@ -67,6 +67,10 @@ class Series(object):
             res.Y[i] = y
         return res
 
+    @classmethod
+    def from_events(cls, events):
+        return cls.from_points([ev.as_point() for ev in events])
+
     def __len__(self):
         assert len(self.X) == len(self.Y)
         return len(self.X)
