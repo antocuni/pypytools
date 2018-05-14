@@ -3,7 +3,7 @@ import textwrap
 from cStringIO import StringIO
 from pypytools.pypylog import parse
 from pypytools.pypylog import model
-from pypytools.pypylog.model import Event, GcMinor
+from pypytools.pypylog.model import Event, GcMinor, GcCollectStep
 
 class TestFlatParser(object):
 
@@ -20,8 +20,8 @@ class TestFlatParser(object):
         [ff789] bar}
         """)
         assert log.all_events() == [
-            Event('foo', 0x000, 0x123),
-            Event('bar', 0x456, 0x789)
+            Event('ff000', 'foo', 0x000, 0x123),
+            Event('ff456', 'bar', 0x456, 0x789)
         ]
 
     def test_mismatch(self):
@@ -45,9 +45,9 @@ class TestFlatParser(object):
         [ff600] baz}
         """)
         assert log.all_events() == [
-            Event('bar', 0x200, 0x300),
-            Event('foo', 0x000, 0x400),
-            Event('baz', 0x500, 0x600)
+            Event('ff200', 'bar', 0x200, 0x300),
+            Event('ff000', 'foo', 0x000, 0x400),
+            Event('ff500', 'baz', 0x500, 0x600)
         ]
 
     def test_GroupedPyPyLog(self):
@@ -64,12 +64,12 @@ class TestFlatParser(object):
         log = self.parse(text, model.GroupedPyPyLog())
         assert sorted(log.sections.keys()) == ['bar', 'foo']
         assert log.sections['foo'] == [
-            Event('foo', 0x000, 0x200),
-            Event('foo', 0x700, 0x800)
+            Event('ff000', 'foo', 0x000, 0x200),
+            Event('ff700', 'foo', 0x700, 0x800)
         ]
         assert log.sections['bar'] == [
-            Event('bar', 0x300, 0x400),
-            Event('bar', 0x500, 0x600)
+            Event('ff300', 'bar', 0x300, 0x400),
+            Event('ff500', 'bar', 0x500, 0x600)
         ]
 
 
@@ -97,10 +97,22 @@ class TestGcParser(object):
         """
         log = self.parse(text, model.GroupedPyPyLog())
         assert log.sections['gc-minor'] == [
-            GcMinor('gc-minor', 0x000, 0x100, memory=1000),
-            GcMinor('gc-minor', 0x200, 0x300, memory=2000),
+            GcMinor('ff000', 'gc-minor', 0x000, 0x100, memory=1000),
+            GcMinor('ff200', 'gc-minor', 0x200, 0x300, memory=2000),
         ]
 
+    def test_gc_collect_step(self):
+        text = """
+        [ff000] {gc-collect-step
+        starting gc state:  SCANNING
+        stopping, now in gc state:  MARKING
+        [ff100] gc-collect-step}
+        """
+        log = self.parse(text)
+        assert log.all_events() == [
+            GcCollectStep('ff000', 'gc-collect-step', 0x000, 0x100,
+                          phase='SCANNING')
+            ]
 
 def test_parse_frequency():
     pf = parse.parse_frequency

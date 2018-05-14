@@ -3,7 +3,7 @@ from pypytools.pypylog import model
 class TestEvent(object):
 
     def test_as_point(self):
-        ev = model.Event('foo', 5, 15)
+        ev = model.Event('123abc', 'foo', 5, 15)
         assert ev.as_point() == (5, 10)
 
 
@@ -31,8 +31,8 @@ class TestSeries(object):
 
 def test_make_step_chart():
     events = [
-        model.Event('gc',  100, 120),
-        model.Event('jit', 130, 135)
+        model.Event('123abc', 'gc',  100, 120),
+        model.Event('456abc', 'jit', 130, 135)
     ]
     s = model.make_step_chart(events)
     points = list(s)

@@ -5,6 +5,7 @@ import numpy as np
 
 @attr.s
 class Event(object):
+    tsid = attr.ib() # unique identifier for an event
     section = attr.ib()
     start = attr.ib()
     end = attr.ib()
@@ -17,6 +18,10 @@ class Event(object):
 @attr.s
 class GcMinor(Event):
     memory = attr.ib(default=None)
+
+@attr.s
+class GcCollectStep(Event):
+    phase = attr.ib(default=None)
 
 
 class PyPyLog(object):

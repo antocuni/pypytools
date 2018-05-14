@@ -13,6 +13,7 @@ class ParseError(Exception):
 
 @attr.s
 class Section(object):
+    tsid = attr.ib()
     name = attr.ib()
     start = attr.ib()
     stop = attr.ib(default=None)
@@ -50,11 +51,11 @@ class BaseParser(object):
                 kind = 'stop'
             else:
                 # no start or stop
-                return None, None, None
+                return None, None, None, None
         #
         timestamp = m.group(1)
         name = m.group(2)
-        return kind, self.parse_timestamp(timestamp), name
+        return kind, timestamp, self.parse_timestamp(timestamp), name
 
     def parse_timestamp(self, ts):
         return int(ts, 16) / self.freq
@@ -65,11 +66,11 @@ class BaseParser(object):
         for line in f:
             if line == '\n':
                 continue
-            kind, ts, name = self.parse_line(line)
+            kind, tsid, ts, name = self.parse_line(line)
             if zero_ts is None:
                 zero_ts = ts
             if kind == 'start':
-                stack.append(Section(name, start=ts-zero_ts))
+                stack.append(Section(tsid, name, start=ts-zero_ts))
             elif kind == 'stop':
                 if name != stack[-1].name:
                     msg = "End section does not match start: expected %s, got %s"
@@ -93,13 +94,14 @@ class FlatParser(BaseParser):
         BaseParser.__init__(self, log, freq)
 
     def section(self, s):
-        ev = model.Event(s.name, s.start, s.stop)
+        ev = model.Event(s.tsid, s.name, s.start, s.stop)
         self.log.add_event(ev)
 
 
 class GcParser(FlatParser):
     COLLECT_LINES = True
     RE_MINOR = re.compile('minor collect, total memory used: ([0-9]*)')
+    RE_STEP = re.compile('starting gc state: (.*)')
 
     def section(self, s):
         name = 'on_%s' % (s.name.replace('-', '_'))
@@ -109,13 +111,23 @@ class GcParser(FlatParser):
         else:
             FlatParser.section(self, s)
 
-    def on_gc_minor(self, s):
-        memory = None
-        for line in s.lines:
-            m = self.RE_MINOR.match(line)
+    def _scan_for_regex(self, regex, lines):
+        for line in lines:
+            m = regex.match(line)
             if m:
-                memory = int(m.group(1))
-        ev = model.GcMinor(s.name, s.start, s.stop, memory=memory)
+                return m.group(1).strip()
+        return None
+
+    def on_gc_minor(self, s):
+        memory = self._scan_for_regex(self.RE_MINOR, s.lines)
+        if memory:
+            memory = int(memory)
+        ev = model.GcMinor(s.tsid, s.name, s.start, s.stop, memory=memory)
+        self.log.add_event(ev)
+
+    def on_gc_collect_step(self, s):
+        phase = self._scan_for_regex(self.RE_STEP, s.lines)
+        ev = model.GcCollectStep(s.tsid, s.name, s.start, s.stop, phase=phase)
         self.log.add_event(ev)
 
 
