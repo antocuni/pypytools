@@ -158,19 +158,23 @@ class LogViewer(QtCore.QObject):
         self.mem_plot.plot(name=name, x=s.X, y=s.Y, pen=pg.mkPen(color))
 
     def make_gc_collect_step(self, name, color):
-        # we want to draw a plot, but also make sure that points are
-        # disconnected after the gc-collect-done
+        # draw a plot of gc-collect-step, making sure that each major
+        # collection is disconnected from the other ones. We consider a major
+        # collection done when we see a transition from FINALIZING to
+        # SCANNING.
         pen = pg.mkPen(color)
         steps = self.log.sections['gc-collect-step']
-        dones = self.log.sections['gc-collect-done']
-        all_events = steps + dones
-        all_events.sort(key=lambda ev: ev.start)
-        s = model.Series(len(all_events))
-        for i, ev in enumerate(all_events):
-            if ev.section == 'gc-collect-step':
-                s[i] = ev.as_point()
-            else:
-                s[i] = ev.start, float('nan')
+        NaN = float('NaN')
+        points = []
+        last_ev = None
+        for ev in steps:
+            if (last_ev and last_ev.phase == 'FINALIZING' and
+                ev.phase == 'SCANNING'):
+                points.append((last_ev.start, NaN))
+                points.append((ev.start, NaN))
+            points.append(ev.as_point())
+            last_ev = ev
+        s = model.Series.from_points(points)
         self.time_plot.plot(name=name, x=s.X, y=s.Y, pen=pen, connect='finite')
 
     def make_one_chart(self, t, name, color, events):
