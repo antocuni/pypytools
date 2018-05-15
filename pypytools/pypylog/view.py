@@ -190,12 +190,8 @@ class LogViewer(QtCore.QObject):
         # draw points of different colors for each distinct phase
         size = 3
         for phase in ('SCANNING', 'MARKING', 'SWEEPING', 'FINALIZING'):
-            s = model.Series.from_events(phases[phase])
             color = COLORS[phase]
-            pen = pg.mkPen(color)
-            brush = pg.mkBrush(color)
-            self.time_plot.scatterPlot(name=phase, x=s.X, y=s.Y, size=size,
-                                       pen=pen, brush=brush)
+            self.make_scatter_plot(phase, color, size, phases[phase])
 
     def make_one_chart(self, t, name, color, events):
         if name == 'gc-collect-step':
@@ -209,14 +205,25 @@ class LogViewer(QtCore.QObject):
                                 connect='pairs',
                                 pen=pen)
         elif t == 'dot':
-            pen = pg.mkPen(color)
-            brush = pg.mkBrush(color)
             size = 2
-            s = model.Series.from_points([ev.as_point() for ev in events])
-            self.time_plot.scatterPlot(name=name, x=s.X, y=s.Y, size=size,
-                                       pen=pen, brush=brush)
+            self.make_scatter_plot(name, color, size, events)
         else:
             raise ValueError('Unknown char type: %s' % t)
+
+    def make_scatter_plot(self, name, color, size, events):
+        pen = pg.mkPen(color)
+        brush = pg.mkBrush(color)
+        size = 2
+        s = model.Series.from_events(events)
+        item = self.time_plot.scatterPlot(name=name, x=s.X, y=s.Y, size=size,
+                                          pen=pen, brush=brush)
+        for ev, p in zip(events, item.scatter.points()):
+            p.event = ev
+        item.sigPointsClicked.connect(self.on_points_clicked)
+
+    def on_points_clicked(self, item, points):
+        for p in points:
+            print getattr(p, 'event', None)
 
     def add_legend_handlers(self):
         # toggle visibility of plot by clicking on the legend
