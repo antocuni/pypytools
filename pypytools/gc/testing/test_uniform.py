@@ -39,3 +39,31 @@ class TestUniformGcStrategy(object):
             freezer.tick(1)
             s.tick(mem=100)             # negative delta_mem
             assert s.alloc_rate == 37.5 # capped at 0
+
+    def test_get_time_for_next_step(self):
+        s = self.new()
+        s.gc_reset()
+        # time to allocate 900 bytes:  9 s
+        # time estimated for the GC:   1 s
+        # total estimated time:       10 s
+        # GC / total:                 10%
+        s.target_memory = 900.0
+        s.alloc_rate = 100.0 # bytes/s
+        s.gc_estimated_t = 1
+        # If the last step took 0.01 s, I wait for 0.09 to keep the expected
+        # GC/total ration
+        s.gc_last_step_t = 42
+        s.gc_last_step_duration = 0.01
+        t = s.get_time_for_next_step(mem=0)
+        assert t == 42.09
+        #
+        # the result changes accordingly to the allocation rate: if I allocate
+        # slower, I have more time to finish the collection
+        s.alloc_rate = 10.0
+        t = s.get_time_for_next_step(mem=0)
+        assert t == 42.9
+        #
+        # if I allocate faster, I need to hurry up
+        s.alloc_rate = 1000.0
+        t = s.get_time_for_next_step(mem=0)
+        assert t == 42.009

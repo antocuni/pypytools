@@ -28,6 +28,15 @@ class UniformGcStrategy(object):
         self.last_mem = initial_mem
         self.alloc_rate = None
         self.target_memory = self.MIN_TARGET
+        #
+        # we don't know how much it will take to complete a GC cycle; we just
+        # guess reasonable numbers here, they will be automatically adjusted
+        # as soon as we complete our first collection
+        self.gc_estimated_t = 0.01 # 10 ms, just a random guess
+        self.gc_last_step_duration = 0.001 # another random guess
+        self.gc_last_step_t = self.last_time
+        self.gc_reset()
+
 
     # ======================================================================
     # Public API
@@ -44,11 +53,14 @@ class UniformGcStrategy(object):
 
         self.last_time = cur_time
         self.last_mem = mem
-    
+
 
     # ======================================================================
     # Private API
     # ======================================================================
+
+    def gc_reset(self):
+        self.gc_cumul_t = 0
 
     def compute_target_memory(self, mem):
         # MIN_TARGET <= mem * MAJOR_COLLECT <= target_memory * GROWTH
@@ -67,3 +79,36 @@ class UniformGcStrategy(object):
         else:
             # equivalent to an exponential moving average
             self.alloc_rate = (self.alloc_rate + cur_alloc_rate) / 2.0
+
+    def get_time_for_next_step(self, mem):
+        """
+        The goal is to spread GC activity as evenly as possible, i.e.  for any
+        given timespan, the GC/user ratio should be roughly the same.
+
+        We know how much time we spent in the GC for the last step, so now we
+        let the user program to run enough to keep the desired ratio.
+
+        What is the ratio? We don't know, but we estimate it based on:
+
+          - the total (estimated) time needed for the GC to complete
+
+          - the total (estimated) time we have before we reach the target,
+            given the current allocation rate
+
+        The formula is derived as follows:
+            let p be the gc/user ration for the complete GC cycle:
+                p = total_gc_time / total_time
+        
+            we want to maintain the ratio for a given step:
+                p = (gc_time) / (gc_time + wait_time) ===>
+                wait_time = gc_time * (1-p)/p
+        """
+        gc_time_left = self.gc_estimated_t - self.gc_cumul_t
+        assert mem < self.target_memory, 'XXX what to do?'
+        assert gc_time_left > 0, 'XXX what to do?'
+
+        mem_left = self.target_memory - mem
+        time_left = (mem_left / self.alloc_rate) + gc_time_left
+        p = gc_time_left / time_left
+        wait_t = self.gc_last_step_duration * (1-p)/p
+        return self.gc_last_step_t + wait_t
