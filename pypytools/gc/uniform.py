@@ -19,15 +19,15 @@ class UniformGcStrategy(object):
     # value of target_memory: the goal is to complete a full major GC cycle
     # just before we reach target_memory.  Once we have the target_memory, we
     # can compute the actual threshold for when to *start* a GC cycle
-    MAJOR_COLLECT = 1.82  # same as PYPY_GC_MAJOR_COLLECT
+    MAJOR_COLLECT = 1.82  # roughly PYPY_GC_MAJOR_COLLECT
     GROWTH = 1.4          # same as PYPY_GC_GROWTH
+    MIN_TARGET = 10*MB    # roughly PYPY_GC_MIN
 
     def __init__(self, initial_mem):
-        self.target_memory = 10 * MB # reasonable value for the first collection
-        #
         self.last_time = time.time()
         self.last_mem = initial_mem
         self.alloc_rate = None
+        self.target_memory = self.MIN_TARGET
 
     # ======================================================================
     # Public API
@@ -51,8 +51,11 @@ class UniformGcStrategy(object):
     # ======================================================================
 
     def compute_target_memory(self, mem):
-        self.target_memory = min(mem * self.MAJOR_COLLECT,
-                                 self.target_memory * self.GROWTH)
+        # MIN_TARGET <= mem * MAJOR_COLLECT <= target_memory * GROWTH
+        self.target_memory = max(
+            self.MIN_TARGET,
+            min(mem * self.MAJOR_COLLECT,
+                self.target_memory * self.GROWTH))
 
     def update_alloc_rate(self, cur_time, mem):
         delta_t = cur_time - self.last_time

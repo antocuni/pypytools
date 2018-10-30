@@ -12,6 +12,7 @@ class TestUniformGcStrategy(object):
     def test_target_memory(self):
         s = self.new(MAJOR_COLLECT=1.8,
                      GROWTH=1.5,
+                     MIN_TARGET=50,
                      target_memory=200)
         #
         s.compute_target_memory(mem=100)
@@ -19,6 +20,9 @@ class TestUniformGcStrategy(object):
         #
         s.compute_target_memory(mem=500)
         assert s.target_memory == 270 # 180*1.5, limited by GROWTH
+        #
+        s.compute_target_memory(mem=10)
+        assert s.target_memory == 50  # MIN_TARGET
 
     def test_alloc_rate(self):
         with freeze_time('2018-01-01') as freezer:
