@@ -67,6 +67,16 @@ class UniformGcStrategy(object):
             self.last_t = cur_t
             self.last_mem = mem
 
+    def record_gc_step(self, mem, duration, stats):
+        """
+        Call this AFTER you call gc.collect_step
+        """
+        self.gc_cumul_t += duration
+        self.gc_steps += 1
+        self.last_mem = mem
+        if stats.major_is_done:
+            self.gc_reset()
+            # XXX: compute new target_memory?
 
     # ======================================================================
     # Private API
@@ -74,6 +84,7 @@ class UniformGcStrategy(object):
 
     def gc_reset(self):
         self.gc_cumul_t = 0
+        self.gc_steps = 0
 
     def compute_target_memory(self, mem):
         # MIN_TARGET <= mem * MAJOR_COLLECT <= target_memory * GROWTH

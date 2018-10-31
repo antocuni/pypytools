@@ -3,6 +3,10 @@ from pytest import approx
 from freezegun import freeze_time
 from pypytools.gc.uniform import UniformGcStrategy
 
+class FakeGcCollectStats(object):
+
+    def __init__(self, major_is_done):
+        self.major_is_done = major_is_done
 
 class TestUniformGcStrategy(object):
 
@@ -105,3 +109,18 @@ class TestUniformGcStrategy(object):
                 if should_collect:
                     break
             assert i == 9
+
+    def test_record_gc_step(self):
+        s = self.new()
+        s.gc_reset()
+        s.record_gc_step(100, 2, FakeGcCollectStats(major_is_done=False))
+        s.record_gc_step(110, 3, FakeGcCollectStats(major_is_done=False))
+        s.record_gc_step(120, 1, FakeGcCollectStats(major_is_done=False))
+        assert s.gc_cumul_t == 2+3+1
+        assert s.gc_steps == 3
+        assert s.last_mem == 120
+        #
+        s.record_gc_step(130, 1, FakeGcCollectStats(major_is_done=True))
+        assert s.gc_cumul_t == 0
+        assert s.gc_steps == 0
+        assert s.last_mem == 130
