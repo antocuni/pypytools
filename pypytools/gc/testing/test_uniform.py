@@ -1,3 +1,4 @@
+import time
 from pytest import approx
 from freezegun import freeze_time
 from pypytools.gc.uniform import UniformGcStrategy
@@ -99,6 +100,8 @@ class TestUniformGcStrategy(object):
                 mem += 1
                 should_collect = s.tick(mem=mem)
                 assert s.alloc_rate == approx(100) # floating point rounding :(
+                assert s.last_t == time.time()
+                assert s.last_mem == mem
                 if should_collect:
                     break
             assert i == 9
