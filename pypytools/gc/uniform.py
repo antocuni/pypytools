@@ -36,7 +36,7 @@ class UniformGcStrategy(object):
         self.last_t = time.time()
         self.last_mem = initial_mem
         self.alloc_rate = None
-        self.target_memory = self.MIN_TARGET
+        self.target_memory = 0 # will be set later by gc_reset()
         #
         # we don't know how much it will take to complete a GC cycle; we just
         # guess reasonable numbers here, they will be automatically adjusted
@@ -44,7 +44,7 @@ class UniformGcStrategy(object):
         self.gc_estimated_t = 0.01 # 10 ms, just a random guess
         self.gc_last_step_duration = 0.001 # another random guess
         self.gc_last_step_t = self.last_t
-        self.gc_reset()
+        self.gc_reset(initial_mem)
 
 
     # ======================================================================
@@ -75,16 +75,16 @@ class UniformGcStrategy(object):
         self.gc_steps += 1
         self.last_mem = mem
         if stats.major_is_done:
-            self.gc_reset()
-            # XXX: compute new target_memory?
+            self.gc_reset(mem)
 
     # ======================================================================
     # Private API
     # ======================================================================
 
-    def gc_reset(self):
+    def gc_reset(self, mem):
         self.gc_cumul_t = 0
         self.gc_steps = 0
+        self.compute_target_memory(mem)
 
     def compute_target_memory(self, mem):
         # MIN_TARGET <= mem * MAJOR_COLLECT <= target_memory * GROWTH

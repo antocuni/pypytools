@@ -11,21 +11,24 @@ class FakeGcCollectStats(object):
 class TestUniformGcStrategy(object):
 
     def new(self, initial_mem=0, **kwds):
-        s = UniformGcStrategy(initial_mem)
+        # we call __new__ and __init__ separately so that we can patch **kwds
+        # before they are used in the __init__ (e.g., MIN_TARGET)
+        s = UniformGcStrategy.__new__(UniformGcStrategy)
         s.__dict__.update(**kwds)
+        s.__init__(initial_mem)
         return s
 
     def test_target_memory(self):
         s = self.new(MAJOR_COLLECT=1.8,
                      GROWTH=1.5,
-                     MIN_TARGET=50,
-                     target_memory=200)
+                     MIN_TARGET=50)
         #
-        s.compute_target_memory(mem=100)
-        assert s.target_memory == 180 # 100*1.8
-        #
+        assert s.target_memory == 50
         s.compute_target_memory(mem=500)
-        assert s.target_memory == 270 # 180*1.5, limited by GROWTH
+        assert s.target_memory == 75 # 50*1.5, limited by GROWTH
+        #
+        s.compute_target_memory(mem=40)
+        assert s.target_memory == 72 # 40*1.8, MAJOR_COLLECT
         #
         s.compute_target_memory(mem=10)
         assert s.target_memory == 50  # MIN_TARGET
@@ -53,7 +56,7 @@ class TestUniformGcStrategy(object):
 
     def test_get_time_for_next_step(self):
         s = self.new(initial_mem=0)
-        s.gc_reset()
+        s.gc_reset(mem=0)
         # time to allocate 900 bytes:  9 s
         # time estimated for the GC:   1 s
         # total estimated time:       10 s
@@ -111,8 +114,12 @@ class TestUniformGcStrategy(object):
             assert i == 9
 
     def test_record_gc_step(self):
-        s = self.new()
-        s.gc_reset()
+        s = self.new(initial_mem=0,
+                     MAJOR_COLLECT=1.8,
+                     GROWTH=1.5,
+                     MIN_TARGET=100)
+        assert s.target_memory == 100
+        #
         s.record_gc_step(100, 2, FakeGcCollectStats(major_is_done=False))
         s.record_gc_step(110, 3, FakeGcCollectStats(major_is_done=False))
         s.record_gc_step(120, 1, FakeGcCollectStats(major_is_done=False))
@@ -120,7 +127,8 @@ class TestUniformGcStrategy(object):
         assert s.gc_steps == 3
         assert s.last_mem == 120
         #
-        s.record_gc_step(130, 1, FakeGcCollectStats(major_is_done=True))
+        s.record_gc_step(80, 1, FakeGcCollectStats(major_is_done=True))
         assert s.gc_cumul_t == 0
         assert s.gc_steps == 0
-        assert s.last_mem == 130
+        assert s.last_mem == 80
+        assert s.target_memory == 80*1.8
