@@ -67,3 +67,10 @@ class TestUniformGcStrategy(object):
         s.alloc_rate = 1000.0
         t = s.get_time_for_next_step(mem=0)
         assert t == 42.009
+
+    def test_emergency_delay(self):
+        # we are using too much memory and we have not finished the GC yet
+        s = self.new(EMERGENCY_DELAY=3)
+        s.gc_last_step_t = 39
+        s.target_memory = 100
+        assert s.get_time_for_next_step(100) == 42

@@ -23,6 +23,15 @@ class UniformGcStrategy(object):
     GROWTH = 1.4          # same as PYPY_GC_GROWTH
     MIN_TARGET = 10*MB    # roughly PYPY_GC_MIN
 
+    # if we are using too much memory, try to run a GC step every
+    # EMERGENCY_DELAY, and hope to finish soon. This might happen if we
+    # suddenly allocate much more than expected, or if a GC cycle takes more
+    # than gc_estimated_t. If EMERGENCY_DELAY is too high, the risk is to
+    # allocate faster than the GC can free, and have an endless loop. If it's
+    # too low, we risk to dedicate too much time to the GC and block important
+    # activity in the user program
+    EMERGENCY_DELAY = 0.01 # 10 ms
+
     def __init__(self, initial_mem):
         self.last_time = time.time()
         self.last_mem = initial_mem
@@ -103,8 +112,9 @@ class UniformGcStrategy(object):
                 p = (gc_time) / (gc_time + wait_time) ===>
                 wait_time = gc_time * (1-p)/p
         """
+        if mem >= self.target_memory:
+            return self.gc_last_step_t + self.EMERGENCY_DELAY
         gc_time_left = self.gc_estimated_t - self.gc_cumul_t
-        assert mem < self.target_memory, 'XXX what to do?'
         assert gc_time_left > 0, 'XXX what to do?'
 
         mem_left = self.target_memory - mem
