@@ -62,7 +62,7 @@ class UniformGcStrategy(object):
             self.update_alloc_rate(cur_t, mem)
             if cur_t >= self.get_time_for_next_step(mem):
                 return True
-
+            return False
         finally:
             self.last_t = cur_t
             self.last_mem = mem
