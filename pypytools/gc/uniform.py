@@ -82,7 +82,7 @@ class UniformGcStrategy(object):
         delta_t = cur_t - self.last_t
         delta_mem = mem - self.last_mem
         cur_alloc_rate = delta_mem / delta_t # bytes/s
-        cur_alloc_rate = max(0, cur_alloc_rate) # never use a negative alloc_rate
+        cur_alloc_rate = max(1, cur_alloc_rate) # avoid ZeroDivisionError later
         if self.alloc_rate is None:
             self.alloc_rate = cur_alloc_rate
         else:

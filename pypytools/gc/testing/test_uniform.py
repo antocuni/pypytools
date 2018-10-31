@@ -38,7 +38,12 @@ class TestUniformGcStrategy(object):
             #
             freezer.tick(1)
             s.tick(mem=100)             # negative delta_mem
-            assert s.alloc_rate == 37.5 # capped at 0
+            assert s.alloc_rate == 38   # capped at 1
+
+    def test_alloc_rate_nonzero(self):
+        s = self.new(initial_mem=100)
+        s.tick(mem=90)
+        assert s.alloc_rate == 1
 
     def test_get_time_for_next_step(self):
         s = self.new()
