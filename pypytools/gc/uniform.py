@@ -33,7 +33,7 @@ class UniformGcStrategy(object):
     EMERGENCY_DELAY = 0.01 # 10 ms
 
     def __init__(self, initial_mem):
-        self.last_time = time.time()
+        self.last_t = time.time()
         self.last_mem = initial_mem
         self.alloc_rate = None
         self.target_memory = self.MIN_TARGET
@@ -43,7 +43,7 @@ class UniformGcStrategy(object):
         # as soon as we complete our first collection
         self.gc_estimated_t = 0.01 # 10 ms, just a random guess
         self.gc_last_step_duration = 0.001 # another random guess
-        self.gc_last_step_t = self.last_time
+        self.gc_last_step_t = self.last_t
         self.gc_reset()
 
 
@@ -57,10 +57,10 @@ class UniformGcStrategy(object):
         Regularly called by the user program. Return True if it is time to run a
         GC step.
         """
-        cur_time = time.time()
-        self.update_alloc_rate(cur_time, mem)
+        cur_t = time.time()
+        self.update_alloc_rate(cur_t, mem)
 
-        self.last_time = cur_time
+        self.last_t = cur_t
         self.last_mem = mem
 
 
@@ -78,8 +78,8 @@ class UniformGcStrategy(object):
             min(mem * self.MAJOR_COLLECT,
                 self.target_memory * self.GROWTH))
 
-    def update_alloc_rate(self, cur_time, mem):
-        delta_t = cur_time - self.last_time
+    def update_alloc_rate(self, cur_t, mem):
+        delta_t = cur_t - self.last_t
         delta_mem = mem - self.last_mem
         cur_alloc_rate = delta_mem / delta_t # bytes/s
         cur_alloc_rate = max(0, cur_alloc_rate) # never use a negative alloc_rate
@@ -116,7 +116,6 @@ class UniformGcStrategy(object):
             return self.gc_last_step_t + self.EMERGENCY_DELAY
         gc_time_left = self.gc_estimated_t - self.gc_cumul_t
         assert gc_time_left > 0, 'XXX what to do?'
-
         mem_left = self.target_memory - mem
         time_left = (mem_left / self.alloc_rate) + gc_time_left
         p = gc_time_left / time_left
