@@ -1,3 +1,4 @@
+from pytest import approx
 from freezegun import freeze_time
 from pypytools.gc.uniform import UniformGcStrategy
 
@@ -46,7 +47,7 @@ class TestUniformGcStrategy(object):
         assert s.alloc_rate == 1
 
     def test_get_time_for_next_step(self):
-        s = self.new()
+        s = self.new(initial_mem=0)
         s.gc_reset()
         # time to allocate 900 bytes:  9 s
         # time estimated for the GC:   1 s
@@ -79,3 +80,25 @@ class TestUniformGcStrategy(object):
         s.gc_last_step_t = 39
         s.target_memory = 100
         assert s.get_time_for_next_step(100) == 42
+
+    def test_should_collect(self):
+        with freeze_time('1970-01-01') as freezer:
+            s = self.new(initial_mem=0)
+            # with the following params and an alloc_rate of 100 bytes/s, the
+            # GC takes an estimated 10% of the time
+            s.target_memory = 900.0
+            s.gc_estimated_t = 1
+            s.gc_last_step_duration = 0.01
+
+            # so, we expect to run 9 iterations before doing one step
+            mem = 0
+            i = 0
+            while True:
+                freezer.tick(0.01)
+                i += 1
+                mem += 1
+                should_collect = s.tick(mem=mem)
+                assert s.alloc_rate == approx(100) # floating point rounding :(
+                if should_collect:
+                    break
+            assert i == 9
