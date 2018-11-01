@@ -22,8 +22,7 @@ class TestUniformGcStrategy(object):
         return FakeGcCollectStats(is_done)
 
     def test_target_allocated_mem(self):
-        s = self.new(MAJOR_COLLECT=1.8,
-                     MIN_TARGET=50)
+        s = self.new(MAJOR_COLLECT=1.8, MIN_TARGET=50)
         assert s.target_allocated_mem == 50
 
         s.start_another_major(mem=100)
@@ -32,18 +31,18 @@ class TestUniformGcStrategy(object):
         s.start_another_major(mem=30)
         assert s.target_allocated_mem == 50 # MIN_TARGET
 
+
     def test_alloc_rate(self):
         with freeze_time('2018-01-01') as freezer:
             s = self.new(initial_mem=100)
-
             freezer.tick(0.5)           # 0.5 second
             s.tick(mem=150)             # delta_mem == 50
             assert s.alloc_rate == 100  # 50/0.5 bytes/s
-            #
+
             freezer.tick(2)             # 2 seconds
             s.tick(mem=250)             # delta_mem == 100
             assert s.alloc_rate == 75   # because of the average
-            #
+
             freezer.tick(1)
             s.tick(mem=100)             # negative delta_mem
             assert s.alloc_rate == 38   # capped at 1
@@ -139,10 +138,9 @@ class TestUniformGcStrategy(object):
         with freeze_time('2018-01-01') as freezer:
             s = self.new(initial_mem=0,
                          MAJOR_COLLECT=1.8,
-                         GROWTH=1.5,
                          MIN_TARGET=50)
             assert s.n_majors == 0
-            #
+
             t = time.time()
             s.record_gc_step(100, 2, self.fakestats(is_done=False))
             s.record_gc_step(110, 3, self.fakestats(is_done=False))
@@ -152,7 +150,7 @@ class TestUniformGcStrategy(object):
             assert s.last_mem == 120
             assert s.last_t == t
             assert s.gc_last_step_t == t
-            #
+
             freezer.tick(1)
             s.record_gc_step(80, 1, self.fakestats(is_done=True))
             assert s.n_majors == 1
