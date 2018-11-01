@@ -68,9 +68,7 @@ class UniformGcStrategy(object):
         """
         try:
             cur_t = time.time()
-            delta_mem = mem - self.last_mem
-            self.allocated_mem += delta_mem
-            self.update_alloc_rate(cur_t, mem)
+            self.update_alloc_stats(cur_t, mem)
             if cur_t >= self.get_time_for_next_step(self.allocated_mem):
                 return True
             return False
@@ -106,7 +104,7 @@ class UniformGcStrategy(object):
         self.target_allocated_mem = max(mem * (self.MAJOR_COLLECT-1),
                                         self.MIN_TARGET)
 
-    def update_alloc_rate(self, cur_t, mem):
+    def update_alloc_stats(self, cur_t, mem):
         delta_t = cur_t - self.last_t
         delta_mem = mem - self.last_mem
         cur_alloc_rate = delta_mem / delta_t # bytes/s
@@ -116,6 +114,7 @@ class UniformGcStrategy(object):
         else:
             # equivalent to an exponential moving average
             self.alloc_rate = (self.alloc_rate + cur_alloc_rate) / 2.0
+        self.allocated_mem += delta_mem
 
     def get_time_for_next_step(self, allocated_mem):
         """
