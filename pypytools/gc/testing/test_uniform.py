@@ -57,32 +57,34 @@ class TestUniformGcStrategy(object):
         # total estimated time:       10 s
         # GC / total:                 10%
         s.target_allocated_mem = 900.0
+        s.allocated_mem = 0
         s.alloc_rate = 100.0 # bytes/s
         s.gc_estimated_t = 1
         # If the last step took 0.01 s, I wait for 0.09 to keep the expected
         # GC/total ration
         s.gc_last_step_t = 42
         s.gc_last_step_duration = 0.01
-        t = s.get_time_for_next_step(allocated_mem=0)
+        t = s.get_time_for_next_step()
         assert t == 42.09
         #
         # the result changes accordingly to the allocation rate: if I allocate
         # slower, I have more time to finish the collection
         s.alloc_rate = 10.0
-        t = s.get_time_for_next_step(allocated_mem=0)
+        t = s.get_time_for_next_step()
         assert t == 42.9
         #
         # if I allocate faster, I need to hurry up
         s.alloc_rate = 1000.0
-        t = s.get_time_for_next_step(allocated_mem=0)
+        t = s.get_time_for_next_step()
         assert t == 42.009
 
     def test_emergency_delay(self):
         # we are using too much memory and we have not finished the GC yet
         s = self.new(EMERGENCY_DELAY=3)
         s.gc_last_step_t = 39
+        s.allocated_mem = 100
         s.target_allocated_mem = 100
-        assert s.get_time_for_next_step(100) == 42
+        assert s.get_time_for_next_step() == 42
 
     def test_allocated_mem(self):
         s = self.new(initial_mem=500)

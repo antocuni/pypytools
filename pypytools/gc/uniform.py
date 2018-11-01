@@ -69,7 +69,7 @@ class UniformGcStrategy(object):
         try:
             cur_t = time.time()
             self.update_alloc_stats(cur_t, mem)
-            if cur_t >= self.get_time_for_next_step(self.allocated_mem):
+            if cur_t >= self.get_time_for_next_step():
                 return True
             return False
         finally:
@@ -112,7 +112,7 @@ class UniformGcStrategy(object):
             self.alloc_rate = (self.alloc_rate + cur_alloc_rate) / 2.0
         self.allocated_mem += delta_mem
 
-    def get_time_for_next_step(self, allocated_mem):
+    def get_time_for_next_step(self):
         """
         The goal is to spread GC activity as evenly as possible, i.e.  for any
         given timespan, the GC/user ratio should be roughly the same.
@@ -135,11 +135,11 @@ class UniformGcStrategy(object):
                 p = (gc_time) / (gc_time + wait_time) ===>
                 wait_time = gc_time * (1-p)/p
         """
-        if allocated_mem >= self.target_allocated_mem:
+        if self.allocated_mem >= self.target_allocated_mem:
             return self.gc_last_step_t + self.EMERGENCY_DELAY
         gc_time_left = self.gc_estimated_t - self.gc_cumul_t
         assert gc_time_left > 0, 'XXX what to do?'
-        mem_left = self.target_allocated_mem - allocated_mem
+        mem_left = self.target_allocated_mem - self.allocated_mem
         time_left = (mem_left / self.alloc_rate) + gc_time_left
         p = gc_time_left / time_left
         wait_t = self.gc_last_step_duration * (1-p)/p
