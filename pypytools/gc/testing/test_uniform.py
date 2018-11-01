@@ -23,10 +23,10 @@ class TestUniformGcStrategy(object):
                      MIN_TARGET=50)
         assert s.target_allocated_mem == 50
 
-        s.compute_target(mem=100)
+        s.start_another_major(mem=100)
         assert s.target_allocated_mem == 80 # 100*(1.8-1)
 
-        s.compute_target(mem=30)
+        s.start_another_major(mem=30)
         assert s.target_allocated_mem == 50 # MIN_TARGET
 
     def test_alloc_rate(self):

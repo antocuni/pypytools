@@ -95,10 +95,6 @@ class UniformGcStrategy(object):
         self.gc_cumul_t = 0
         self.gc_steps = 0
         self.allocated_mem = 0
-        self.compute_target(mem)
-
-    # XXX: kill this and merge with gc_reset
-    def compute_target(self, mem):
         # MAJOR_COLLECT is a k>1, relative to mem; but we want the delta, so
         # we just use MAJOR_COLLECT-1
         self.target_allocated_mem = max(mem * (self.MAJOR_COLLECT-1),
