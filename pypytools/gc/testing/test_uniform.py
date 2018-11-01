@@ -66,13 +66,21 @@ class TestUniformGcStrategy(object):
         s.gc_last_step_duration = 0.01
         t = s.get_time_for_next_step()
         assert t == 42.09
-        #
+
+        # the time doesn't change if I allocate at the expected rate
+        s.allocated_mem = 300
+        s.gc_last_step_t = 42.03
+        t = s.get_time_for_next_step()
+        assert t == 42.09
+
         # the result changes accordingly to the allocation rate: if I allocate
         # slower, I have more time to finish the collection
+        s.allocated_mem = 0
         s.alloc_rate = 10.0
+        s.gc_last_step_t = 42
         t = s.get_time_for_next_step()
         assert t == 42.9
-        #
+
         # if I allocate faster, I need to hurry up
         s.alloc_rate = 1000.0
         t = s.get_time_for_next_step()
