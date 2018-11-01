@@ -18,6 +18,9 @@ class TestUniformGcStrategy(object):
         s.__init__(initial_mem)
         return s
 
+    def fakestats(self, is_done=False):
+        return FakeGcCollectStats(is_done)
+
     def test_target_allocated_mem(self):
         s = self.new(MAJOR_COLLECT=1.8,
                      MIN_TARGET=50)
@@ -104,13 +107,12 @@ class TestUniformGcStrategy(object):
         assert s.allocated_mem == 200
 
         # simulate a sweep step, in which the mem usage decrease
-        s.record_gc_step(mem=650, duration=0,
-                         stats=FakeGcCollectStats(major_is_done=False))
+        s.record_gc_step(mem=650, duration=0, stats=self.fakestats())
         s.tick(mem=690) # mem is back at 690, +40 bytes
         assert s.allocated_mem == 240
 
     def test_should_collect(self):
-        with freeze_time('1970-01-01') as freezer:
+        with freeze_time('2018-01-01') as freezer:
             s = self.new(initial_mem=0)
             # with the following params and an alloc_rate of 100 bytes/s, the
             # GC takes an estimated 10% of the time
@@ -134,22 +136,29 @@ class TestUniformGcStrategy(object):
             assert i == 9
 
     def test_record_gc_step(self):
-        s = self.new(initial_mem=0,
-                     MAJOR_COLLECT=1.8,
-                     GROWTH=1.5,
-                     MIN_TARGET=50)
-        assert s.n_majors == 0
-        #
-        s.record_gc_step(100, 2, FakeGcCollectStats(major_is_done=False))
-        s.record_gc_step(110, 3, FakeGcCollectStats(major_is_done=False))
-        s.record_gc_step(120, 1, FakeGcCollectStats(major_is_done=False))
-        assert s.gc_cumul_t == 2+3+1
-        assert s.gc_steps == 3
-        assert s.last_mem == 120
-        #
-        s.record_gc_step(80, 1, FakeGcCollectStats(major_is_done=True))
-        assert s.n_majors == 1
-        assert s.gc_cumul_t == 0
-        assert s.gc_steps == 0
-        assert s.last_mem == 80
-        assert s.target_allocated_mem == 80*0.8
+        with freeze_time('2018-01-01') as freezer:
+            s = self.new(initial_mem=0,
+                         MAJOR_COLLECT=1.8,
+                         GROWTH=1.5,
+                         MIN_TARGET=50)
+            assert s.n_majors == 0
+            #
+            t = time.time()
+            s.record_gc_step(100, 2, self.fakestats(is_done=False))
+            s.record_gc_step(110, 3, self.fakestats(is_done=False))
+            s.record_gc_step(120, 1, self.fakestats(is_done=False))
+            assert s.gc_cumul_t == 2+3+1
+            assert s.gc_steps == 3
+            assert s.last_mem == 120
+            assert s.last_t == t
+            assert s.gc_last_step_t == t
+            #
+            freezer.tick(1)
+            s.record_gc_step(80, 1, self.fakestats(is_done=True))
+            assert s.n_majors == 1
+            assert s.gc_cumul_t == 0
+            assert s.gc_steps == 0
+            assert s.last_mem == 80
+            assert s.last_t == t+1
+            assert s.gc_last_step_t == t+1
+            assert s.target_allocated_mem == 80*0.8

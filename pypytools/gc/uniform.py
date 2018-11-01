@@ -73,22 +73,27 @@ class UniformGcStrategy(object):
                 return True
             return False
         finally:
-            self.last_t = cur_t
-            self.last_mem = mem
+            self.record_mem(cur_t, mem)
 
     def record_gc_step(self, mem, duration, stats):
         """
         Call this AFTER you call gc.collect_step
         """
+        cur_t = time.time()
+        self.record_mem(cur_t, mem)
         self.gc_cumul_t += duration
         self.gc_steps += 1
-        self.last_mem = mem
+        self.gc_last_step_t = cur_t
         if stats.major_is_done:
             self.start_another_major(mem)
 
     # ======================================================================
     # Private API
     # ======================================================================
+
+    def record_mem(self, cur_t, mem):
+        self.last_t = cur_t
+        self.last_mem = mem
 
     def start_another_major(self, mem):
         self.n_majors += 1
