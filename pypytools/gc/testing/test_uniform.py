@@ -23,14 +23,26 @@ class TestUniformGcStrategy(object):
 
     def test_target_allocated_mem(self):
         s = self.new(MAJOR_COLLECT=1.8, MIN_TARGET=50)
+        assert s.target_mem == 50
         assert s.target_allocated_mem == 50
 
         s.start_another_major(mem=100)
-        assert s.target_allocated_mem == 80 # 100*(1.8-1)
+        assert s.target_mem == 180 # 100*1.8
+        assert s.target_allocated_mem == 80
 
-        s.start_another_major(mem=30)
-        assert s.target_allocated_mem == 50 # MIN_TARGET
+        s.start_another_major(mem=20)
+        assert s.target_mem == 50 # MIN_TARGET
+        assert s.target_allocated_mem == 30
 
+    def test_estimated_gc(self):
+        s = self.new(MAJOR_COLLECT=1.8, MIN_TARGET=1)
+        # the last GC took 1s for a target_mem of 100
+        s.target_mem = 100
+        s.gc_cumul_t = 1.0
+
+        s.start_another_major(mem=100)
+        assert s.target_mem == 180
+        assert s.gc_estimated_t == 1.8
 
     def test_alloc_rate(self):
         with freeze_time('2018-01-01') as freezer:

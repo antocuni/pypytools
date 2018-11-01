@@ -42,11 +42,12 @@ class UniformGcStrategy(object):
         # Note that both are adjusted during a start_major()
         self.allocated_mem = 0
         self.target_allocated_mem = 0
+        self.target_mem = 1
 
         # we don't know how much it will take to complete a GC cycle; we just
         # guess reasonable numbers here, they will be automatically adjusted
         # as soon as we complete our first collection
-        self.gc_estimated_t = 0.01 # 10 ms, just a random guess
+        self.gc_cumul_t = 0.01 # just a random guess
         self.gc_last_step_duration = 0.001 # another random guess
         self.gc_last_step_t = self.last_t
 
@@ -96,14 +97,15 @@ class UniformGcStrategy(object):
         self.last_mem = mem
 
     def start_another_major(self, mem):
+        # we estimate the time needed for a GC for a given target_mem
+        k_gc = self.gc_cumul_t / self.target_mem
         self.n_majors += 1
         self.gc_cumul_t = 0
         self.gc_steps = 0
         self.allocated_mem = 0
-        # MAJOR_COLLECT is a k>1, relative to mem; but we want the delta, so
-        # we just use MAJOR_COLLECT-1
-        self.target_allocated_mem = max(mem * (self.MAJOR_COLLECT-1),
-                                        self.MIN_TARGET)
+        self.target_mem = max(mem * self.MAJOR_COLLECT, self.MIN_TARGET)
+        self.target_allocated_mem = self.target_mem - mem
+        self.gc_estimated_t = k_gc * self.target_mem
 
     def update_alloc_stats(self, cur_t, mem):
         delta_t = cur_t - self.last_t
