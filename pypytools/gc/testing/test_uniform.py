@@ -172,3 +172,21 @@ class TestUniformGcStrategy(object):
             assert s.last_t == t+1
             assert s.gc_last_step_t == t+1
             assert s.target_allocated_mem == 80*0.8
+
+    def test_adjust_gc_estimated_t(self):
+        s = self.new(initial_mem=0, ESTIMATED_OVERFLOW_FACTOR=1.2)
+        s.gc_estimated_t = 10.0
+        stats = self.fakestats(is_done=False)
+        s.record_gc_step(mem=100, duration=9, stats=stats)
+        assert s.gc_estimated_t == 10.0
+
+        # gc_cumul_t => 11.5, adjust the estimate
+        s.record_gc_step(mem=100, duration=1.5, stats=stats)
+        assert s.gc_estimated_t == 12.0
+
+        # if gc_cumul_t is much bigger than the estimate, a single
+        # *=ESTIMATED_OVERFLOW_FACTOR is not enouch; keep multiplying until
+        # the estimate is bigger than the measured
+        # gc_cumul_t ==> 14.5
+        s.record_gc_step(mem=100, duration=4.5, stats=stats)
+        assert s.gc_estimated_t == 12.0 * 1.2 * 1.2

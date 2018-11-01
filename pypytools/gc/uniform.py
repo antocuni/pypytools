@@ -29,6 +29,10 @@ class UniformGcStrategy(object):
     # activity in the user program
     EMERGENCY_DELAY = 0.01 # 10 ms
 
+    # if the measured GC time is already bigger than estimated, we simply
+    # adjust the estimated
+    ESTIMATED_OVERFLOW_FACTOR = 1.1
+
     def __init__(self, initial_mem):
         self.last_mem = initial_mem   # last known value of used memory
         self.last_t = time.time()     # time of the last tick
@@ -83,6 +87,12 @@ class UniformGcStrategy(object):
         cur_t = time.time()
         self.record_mem(cur_t, mem)
         self.gc_cumul_t += duration
+
+        # if our estimate was too low, too bad. Just increase it. The
+        # invariant is that gc_cumul_t < gc_estimated_t
+        while self.gc_cumul_t >= self.gc_estimated_t:
+            self.gc_estimated_t *= self.ESTIMATED_OVERFLOW_FACTOR
+
         self.gc_steps += 1
         self.gc_last_step_t = cur_t
         if stats.major_is_done:
@@ -144,8 +154,12 @@ class UniformGcStrategy(object):
         """
         if self.allocated_mem >= self.target_allocated_mem:
             return self.gc_last_step_t + self.EMERGENCY_DELAY
+
+        # the invariant is that gc_cumul_t < gc_estimated_t; it is ensured in
+        # record_gc_step
         gc_time_left = self.gc_estimated_t - self.gc_cumul_t
-        assert gc_time_left > 0, 'XXX what to do?'
+        assert gc_time_left > 0, 'bug in record_gc_step?'
+
         mem_left = self.target_allocated_mem - self.allocated_mem
         time_left = (mem_left / self.alloc_rate) + gc_time_left
         p = gc_time_left / time_left
