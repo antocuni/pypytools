@@ -15,12 +15,9 @@ class UniformGcStrategy(object):
     # PyPy GC uses PYPY_GC_MAJOR_COLLECT to compute the threshold for when to
     # start a major collection: however, with UniformGc a major collection
     # will take a lot of time to complete, and in the meantime the user
-    # program can callocate more.  So, we use MAJOR_COLLECT to compute the
-    # value of target_memory: the goal is to complete a full major GC cycle
-    # just before we reach target_memory.  Once we have the target_memory, we
-    # can compute the actual threshold for when to *start* a GC cycle
+    # program an callocate more.  So, we use MAJOR_COLLECT to compute the
+    # value of target_allocated_mem
     MAJOR_COLLECT = 1.82  # roughly PYPY_GC_MAJOR_COLLECT
-    GROWTH = 1.4          # same as PYPY_GC_GROWTH
     MIN_TARGET = 10*MB    # roughly PYPY_GC_MIN
 
     # if we are using too much memory, try to run a GC step every
@@ -33,11 +30,19 @@ class UniformGcStrategy(object):
     EMERGENCY_DELAY = 0.01 # 10 ms
 
     def __init__(self, initial_mem):
-        self.last_t = time.time()
-        self.last_mem = initial_mem
-        self.alloc_rate = None
-        self.target_memory = 0 # will be set later by gc_reset()
-        #
+        self.last_mem = initial_mem   # last known value of used memory
+        self.last_t = time.time()     # time of the last tick
+        self.alloc_rate = None        # estimated allocation rate, bytes/s
+
+        # the memory allocated by the user program SINCE THE START of the
+        # current collection.  Note that it is NOT equivalent to
+        # "current_mem-starting_mem", because during the sweeping phases the
+        # current_mem shrinks.  We aim to finish the GC cycle before
+        # allocated_mem > target_allocated_mem
+        # Note that both are adjusted during a gc_reset()
+        self.allocated_mem = 0
+        self.target_allocated_mem = 0
+
         # we don't know how much it will take to complete a GC cycle; we just
         # guess reasonable numbers here, they will be automatically adjusted
         # as soon as we complete our first collection
@@ -59,8 +64,10 @@ class UniformGcStrategy(object):
         """
         try:
             cur_t = time.time()
+            delta_mem = mem - self.last_mem
+            self.allocated_mem += delta_mem
             self.update_alloc_rate(cur_t, mem)
-            if cur_t >= self.get_time_for_next_step(mem):
+            if cur_t >= self.get_time_for_next_step(self.allocated_mem):
                 return True
             return False
         finally:
@@ -84,14 +91,15 @@ class UniformGcStrategy(object):
     def gc_reset(self, mem):
         self.gc_cumul_t = 0
         self.gc_steps = 0
-        self.compute_target_memory(mem)
+        self.allocated_mem = 0
+        self.compute_target(mem)
 
-    def compute_target_memory(self, mem):
-        # MIN_TARGET <= mem * MAJOR_COLLECT <= target_memory * GROWTH
-        self.target_memory = max(
-            self.MIN_TARGET,
-            min(mem * self.MAJOR_COLLECT,
-                self.target_memory * self.GROWTH))
+    # XXX: kill this and merge with gc_reset
+    def compute_target(self, mem):
+        # MAJOR_COLLECT is a k>1, relative to mem; but we want the delta, so
+        # we just use MAJOR_COLLECT-1
+        self.target_allocated_mem = max(mem * (self.MAJOR_COLLECT-1),
+                                        self.MIN_TARGET)
 
     def update_alloc_rate(self, cur_t, mem):
         delta_t = cur_t - self.last_t
@@ -104,7 +112,7 @@ class UniformGcStrategy(object):
             # equivalent to an exponential moving average
             self.alloc_rate = (self.alloc_rate + cur_alloc_rate) / 2.0
 
-    def get_time_for_next_step(self, mem):
+    def get_time_for_next_step(self, allocated_mem):
         """
         The goal is to spread GC activity as evenly as possible, i.e.  for any
         given timespan, the GC/user ratio should be roughly the same.
@@ -127,11 +135,11 @@ class UniformGcStrategy(object):
                 p = (gc_time) / (gc_time + wait_time) ===>
                 wait_time = gc_time * (1-p)/p
         """
-        if mem >= self.target_memory:
+        if allocated_mem >= self.target_allocated_mem:
             return self.gc_last_step_t + self.EMERGENCY_DELAY
         gc_time_left = self.gc_estimated_t - self.gc_cumul_t
         assert gc_time_left > 0, 'XXX what to do?'
-        mem_left = self.target_memory - mem
+        mem_left = self.target_allocated_mem - allocated_mem
         time_left = (mem_left / self.alloc_rate) + gc_time_left
         p = gc_time_left / time_left
         wait_t = self.gc_last_step_duration * (1-p)/p
