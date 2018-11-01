@@ -39,7 +39,7 @@ class UniformGcStrategy(object):
         # "current_mem-starting_mem", because during the sweeping phases the
         # current_mem shrinks.  We aim to finish the GC cycle before
         # allocated_mem > target_allocated_mem
-        # Note that both are adjusted during a gc_reset()
+        # Note that both are adjusted during a start_major()
         self.allocated_mem = 0
         self.target_allocated_mem = 0
 
@@ -49,7 +49,11 @@ class UniformGcStrategy(object):
         self.gc_estimated_t = 0.01 # 10 ms, just a random guess
         self.gc_last_step_duration = 0.001 # another random guess
         self.gc_last_step_t = self.last_t
-        self.gc_reset(initial_mem)
+
+        # number of major collections fully done so far. Not used by anything,
+        # just a statistics
+        self.n_majors = -1 # increased to 0 when we start_another_major()
+        self.start_another_major(initial_mem)
 
 
     # ======================================================================
@@ -82,13 +86,14 @@ class UniformGcStrategy(object):
         self.gc_steps += 1
         self.last_mem = mem
         if stats.major_is_done:
-            self.gc_reset(mem)
+            self.start_another_major(mem)
 
     # ======================================================================
     # Private API
     # ======================================================================
 
-    def gc_reset(self, mem):
+    def start_another_major(self, mem):
+        self.n_majors += 1
         self.gc_cumul_t = 0
         self.gc_steps = 0
         self.allocated_mem = 0

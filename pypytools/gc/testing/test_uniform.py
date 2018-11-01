@@ -52,7 +52,6 @@ class TestUniformGcStrategy(object):
 
     def test_get_time_for_next_step(self):
         s = self.new(initial_mem=0)
-        s.gc_reset(mem=0)
         # time to allocate 900 bytes:  9 s
         # time estimated for the GC:   1 s
         # total estimated time:       10 s
@@ -129,7 +128,7 @@ class TestUniformGcStrategy(object):
                      MAJOR_COLLECT=1.8,
                      GROWTH=1.5,
                      MIN_TARGET=50)
-        assert s.target_allocated_mem == 50
+        assert s.n_majors == 0
         #
         s.record_gc_step(100, 2, FakeGcCollectStats(major_is_done=False))
         s.record_gc_step(110, 3, FakeGcCollectStats(major_is_done=False))
@@ -139,6 +138,7 @@ class TestUniformGcStrategy(object):
         assert s.last_mem == 120
         #
         s.record_gc_step(80, 1, FakeGcCollectStats(major_is_done=True))
+        assert s.n_majors == 1
         assert s.gc_cumul_t == 0
         assert s.gc_steps == 0
         assert s.last_mem == 80
