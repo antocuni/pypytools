@@ -58,14 +58,17 @@ COLORS = {
     'jit-abort-log': None,
     'jit-abort-longest-function': None,
     'jit-backend-addr': None,
+    'jit-backend-counts': None,
     'jit-backend-dump': None,
     'jit-disableinlining': None,
     'jit-log-compiling-bridge': None,
     'jit-log-compiling-loop': None,
+    'jit-log-exported-state': None,
     'jit-log-noopt': None,
     'jit-log-opt-bridge': None,
     'jit-log-opt-loop': None,
     'jit-log-rewritten-bridge': None,
+    'jit-log-rewritten-loop': None,
     'jit-log-short-preamble': None,
     'jit-mem-looptoken-alloc': None,
     'jit-summary': None,
@@ -148,6 +151,9 @@ class LogViewer(QtCore.QObject):
     def make_charts(self):
         sections = sorted(self.log.sections)
         for i, name in enumerate(sections):
+            if name not in COLORS:
+                print 'WARNING: unexpected section %s, ignoring' % name
+                COLORS[name] = None
             color = COLORS[name]
             if color is None:
                 continue
