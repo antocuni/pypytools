@@ -1,4 +1,5 @@
 import pytest
+from pypytools import IS_PYPY
 from pypytools.gc import multihook
 from pypytools.gc.multihook import MultiHook, GcHooks
 
@@ -147,3 +148,22 @@ class TestGcHooks(object):
 
         assert a1.minors == [1, 2]
         assert a2.minors == [2, 3]
+
+    @pytest.mark.skipif(not IS_PYPY, reason='PyPy only test')
+    def test_real_hooks(self, mh):
+        # note that we are NOT using fakegc here
+        import gc
+        class A(GcHooks):
+            def __init__(self):
+                self.collects = []
+
+            def on_gc_collect(self, stats):
+                self.collects.append(stats)
+
+        a1 = A()
+        a2 = A()
+        a1.enable()
+        a2.enable()
+        gc.collect()
+        assert a1.collects[0].count >= 1
+        assert a2.collects[0].count >= 1
