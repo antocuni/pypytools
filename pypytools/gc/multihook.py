@@ -2,6 +2,7 @@
 Improve PyPy's GC hooks and make it possible to have multiple callbacks
 """
 import gc
+import types
 
 class MultiHook(object):
     """
@@ -21,7 +22,22 @@ class MultiHook(object):
         self.hooks.remove(gchooks)
         self._update_callbacks()
 
+    def _check_other_hooks(self):
+        # Safety check to avoid disabling other hooks by mistake: the only
+        # permitted hooks are the ones installed by us, i.e. bound methods of
+        # "self". If we find extraneous hooks, complain
+        def check(m):
+            return (m is None or
+                    (isinstance(m, types.MethodType) and m.__self__ is self))
+
+        if not (check(gc.hooks.on_gc_minor) and
+                check(gc.hooks.on_gc_collect_step) and
+                check(gc.hooks.on_gc_collect)):
+            raise ValueError("It seems other GC hooks are already installed. "
+                             "Consider to use multihook everywhere.")
+
     def _update_callbacks(self):
+        self._check_other_hooks()
         self.minor_callbacks = []
         self.collect_step_callbacks = []
         self.collect_callbacks = []

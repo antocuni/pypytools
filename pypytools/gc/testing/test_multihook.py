@@ -100,3 +100,16 @@ class TestMultiHook:
         assert fakegc.hooks.on_gc_collect is None
         fakegc.fire_minor('minor')
         assert a.minors == ['minor']
+
+    def test_check_no_other_hooks(self, fakegc):
+        # check that nobody else is messing with gc.hooks directly
+        fakegc.hooks.on_gc_minor = lambda stats: None
+        with pytest.raises(ValueError):
+            MultiHook()
+
+    def test_check_no_other_hooks_when_adding(self, fakegc):
+        # check that nobody else is messing with gc.hooks directly
+        mh = MultiHook()
+        fakegc.hooks.on_gc_minor = lambda stats: None
+        with pytest.raises(ValueError):
+            mh.add(object())
