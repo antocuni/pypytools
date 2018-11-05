@@ -1,6 +1,6 @@
 import pytest
 from pypytools.gc import multihook
-from pypytools.gc.multihook import MultiHook, GcHooks
+from pypytools.gc.multihook import MultiHook
 
 @pytest.fixture
 def fakegc(monkeypatch):
@@ -83,3 +83,20 @@ class TestMultiHook:
         assert a.minors == ['minor']
         assert a.steps == ['step']
         assert a.collects == ['collect']
+
+    def test_dont_install_hook_if_no_cb(self, fakegc):
+        class A(object):
+            def __init__(self):
+                self.minors = []
+
+            def on_gc_minor(self, stats):
+                self.minors.append(stats)
+
+        a = A()
+        mh = MultiHook()
+        mh.add(a)
+        assert fakegc.hooks.on_gc_minor is not None
+        assert fakegc.hooks.on_gc_collect_step is None
+        assert fakegc.hooks.on_gc_collect is None
+        fakegc.fire_minor('minor')
+        assert a.minors == ['minor']
