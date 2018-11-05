@@ -4,11 +4,38 @@ Improve PyPy's GC hooks and make it possible to have multiple callbacks
 import gc
 import types
 
+class GcHooks(object):
+    """
+    Main entry point to use multiple GC hooks. Make a subclass, override the
+    desided handlers and call enable() and disable() appropriately.
+    """
+
+    on_gc_minor = None
+    on_gc_collect_step = None
+    on_gc_collect = None
+
+    def enable(self):
+        MultiHook.get().add(self)
+
+    def disable(self):
+        MultiHook.get().remove(self)
+
+
 class MultiHook(object):
     """
     This is the actual class which is installed as GC hooks. It is not meant
     to be used directly, but to be manipulates by GcHooks()
     """
+
+    # MultiHook is supposed to be a singleton (apart from tests). Use
+    # MultiHook.get() to access it
+    _instance = None
+
+    @classmethod
+    def get(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
 
     def __init__(self):
         self.hooks = [] # list of GcHooks instances

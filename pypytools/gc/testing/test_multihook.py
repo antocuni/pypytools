@@ -1,6 +1,6 @@
 import pytest
 from pypytools.gc import multihook
-from pypytools.gc.multihook import MultiHook
+from pypytools.gc.multihook import MultiHook, GcHooks
 
 @pytest.fixture
 def fakegc(monkeypatch):
@@ -113,3 +113,37 @@ class TestMultiHook:
         fakegc.hooks.on_gc_minor = lambda stats: None
         with pytest.raises(ValueError):
             mh.add(object())
+
+
+class TestGcHooks(object):
+
+    @pytest.fixture
+    def mh(self, monkeypatch):
+        # install itself as MultiHook singleton, to avoid leaving around
+        # global state
+        obj = MultiHook()
+        monkeypatch.setattr(MultiHook, '_instance', obj)
+        return obj
+
+    def test_mh(self, fakegc, mh):
+        assert MultiHook.get() is mh
+
+    def test_enable_disable(self, fakegc, mh):
+        class A(GcHooks):
+            def __init__(self):
+                self.minors = []
+
+            def on_gc_minor(self, stats):
+                self.minors.append(stats)
+
+        a1 = A()
+        a2 = A()
+        a1.enable()
+        fakegc.fire_minor(1)
+        a2.enable()
+        fakegc.fire_minor(2)
+        a1.disable()
+        fakegc.fire_minor(3)
+
+        assert a1.minors == [1, 2]
+        assert a2.minors == [2, 3]
