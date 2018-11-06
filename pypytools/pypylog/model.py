@@ -45,10 +45,10 @@ class GroupedPyPyLog(object):
         self.sections[ev.section].append(ev)
 
     def print_summary(self):
-        fmt = '%28s %6s %8s'
+        fmt = '%-28s %6s %8s'
         print fmt % ('section', 'n', 'delta')
         print '-'*44
-        for name, events in self.sections.iteritems():
+        for name, events in sorted(self.sections.iteritems()):
             total = 0
             for ev in events:
                 delta = ev.end - ev.start

@@ -1,32 +1,26 @@
 import pytest
 from pypytools import IS_PYPY
-from pypytools.gc import multihook
 from pypytools.gc.multihook import MultiHook, GcHooks
+from pypytools.gc.testing.test_fakegc import fakegc
 
-@pytest.fixture
-def fakegc(monkeypatch):
-    mygc = FakeGc()
-    monkeypatch.setattr(multihook, 'gc', mygc)
-    return mygc
-
-class FakeGc(object):
-
-    class Hooks(object):
-        on_gc_minor = None
-        on_gc_collect_step = None
-        on_gc_collect = None
-
+class GcStatistics(GcHooks):
     def __init__(self):
-        self.hooks = self.Hooks()
+        self.reset()
 
-    def fire_minor(self, stats):
-        self.hooks.on_gc_minor(stats)
+    def reset(self):
+        self.minors = []
+        self.steps = []
+        self.collects = []
 
-    def fire_step(self, stats):
-        self.hooks.on_gc_collect_step(stats)
+    def on_gc_minor(self, stats):
+        self.minors.append(stats)
 
-    def fire_collect(self, stats):
-        self.hooks.on_gc_collect(stats)
+    def on_gc_collect_step(self, stats):
+        self.steps.append(stats)
+
+    def on_gc_collect(self, stats):
+        self.collects.append(stats)
+
 
 
 class TestMultiHook:
@@ -59,22 +53,7 @@ class TestMultiHook:
         assert mh.collect_callbacks == []
 
     def test_install_hook(self, fakegc):
-        class A(object):
-            def __init__(self):
-                self.minors = []
-                self.steps = []
-                self.collects = []
-
-            def on_gc_minor(self, stats):
-                self.minors.append(stats)
-
-            def on_gc_collect_step(self, stats):
-                self.steps.append(stats)
-
-            def on_gc_collect(self, stats):
-                self.collects.append(stats)
-
-        a = A()
+        a = GcStatistics()
         mh = MultiHook()
         mh.add(a)
 
@@ -153,15 +132,8 @@ class TestGcHooks(object):
     def test_real_hooks(self, mh):
         # note that we are NOT using fakegc here
         import gc
-        class A(GcHooks):
-            def __init__(self):
-                self.collects = []
-
-            def on_gc_collect(self, stats):
-                self.collects.append(stats)
-
-        a1 = A()
-        a2 = A()
+        a1 = GcStatistics()
+        a2 = GcStatistics()
         a1.enable()
         a2.enable()
         gc.collect()

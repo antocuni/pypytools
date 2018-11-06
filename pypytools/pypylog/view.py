@@ -169,6 +169,7 @@ class LogViewer(QtCore.QObject):
         s = model.Series(len(events))
         for i, ev in enumerate(events):
             s[i] = ev.start, ev.memory
+        print 'Max memory:', s.Y.max()
         self.mem_plot.plot(name=name, x=s.X, y=s.Y, pen=pg.mkPen(color))
 
     def make_gc_collect_step(self, name, color):
