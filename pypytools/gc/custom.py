@@ -1,3 +1,4 @@
+import sys
 import gc
 from pypytools import IS_PYPY
 from pypytools.gc.multihook import GcHooks
@@ -38,9 +39,9 @@ class DefaultGc(CustomGc):
     Custom GC which mimimcs the default logic of incminimark
     """
 
-    MAJOR_COLLECT = 1.82    # same as PYPY_GC_MAJOR_COLLECT
-    MIN_THRESHOLD = 10*MB   # same as PYPY_GC_MIN
-    MAX_GROWTH = 1.4        # same as PYPY_GC_GROWTH
+    MAJOR_COLLECT = 1.82      # same as PYPY_GC_MAJOR_COLLECT
+    MIN_THRESHOLD = 4*8 * MB  # same as PYPY_GC_MIN
+    MAX_GROWTH = 1.4          # same as PYPY_GC_GROWTH
 
     def __init__(self):
         super(DefaultGc, self).__init__()
