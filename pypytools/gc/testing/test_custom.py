@@ -1,7 +1,7 @@
 import pytest
 from pypytools import IS_PYPY
 from pypytools.gc.custom import CustomGc, DefaultGc
-from pypytools.gc.testing.test_fakegc import fakegc
+from pypytools.gc.testing.test_fakegc import fakegc, FakeMinorStats
 from pypytools.gc.testing.test_multihook import GcStatistics
 
 
@@ -53,6 +53,43 @@ class TestDefaultGc:
         mygc.update_threshold(mem=80)
         assert mygc.threshold == 160 # mem * MAJOR_COLLECT
 
+    def test_run_steps(self, fakegc):
+        class MyGc(DefaultGc):
+            MAJOR_COLLECT = 2.0
+            MIN_THRESHOLD = 100
+            MAX_GROWTH = 100
+
+        def S(mem):
+            return FakeMinorStats(total_memory_used=mem)
+
+        stats = GcStatistics()
+        mygc = MyGc()
+
+        stats.enable()
+        mygc.enable()
+
+        assert mygc.threshold == 100
+        fakegc._steps_to_major = 3
+        fakegc.fire_minor(S(mem=50))
+        assert not mygc.major_in_progress
+        assert len(stats.steps) == 0
+
+        fakegc.fire_minor(S(mem=101))
+        assert mygc.major_in_progress
+        assert len(stats.steps) == 1
+
+        fakegc.fire_minor(S(mem=102))
+        assert mygc.major_in_progress
+        assert len(stats.steps) == 2
+
+        fakegc.fire_minor(S(mem=103))
+        assert not mygc.major_in_progress
+        assert len(stats.steps) == 3
+        assert mygc.threshold == 206
+
+        fakegc.fire_minor(S(mem=104))
+        assert not mygc.major_in_progress
+        assert len(stats.steps) == 3 # no more steps
 
     @pytest.mark.skipif(not IS_PYPY, reason='PyPy only test')
     def test_real_gc(self):
