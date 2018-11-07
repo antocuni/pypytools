@@ -64,7 +64,6 @@ class TestDefaultGc:
 
         stats = GcStatistics()
         mygc = MyGc()
-
         stats.enable()
         mygc.enable()
 
@@ -91,6 +90,30 @@ class TestDefaultGc:
         assert not mygc.major_in_progress
         assert len(stats.steps) == 3 # no more steps
 
+    def test_nogc(self, fakegc):
+        class MyGc(DefaultGc):
+            MAJOR_COLLECT = 2.0
+            MIN_THRESHOLD = 100
+            MAX_GROWTH = 100
+
+        def S(mem):
+            return FakeMinorStats(total_memory_used=mem)
+
+        stats = GcStatistics()
+        mygc = MyGc()
+        stats.enable()
+        mygc.enable()
+
+        fakegc.fire_minor(S(mem=101))
+        assert len(stats.steps) == 1
+        with mygc.nogc():
+            fakegc.fire_minor(S(mem=102))
+            assert len(stats.steps) == 1 # don't do a collect_step here
+        fakegc.fire_minor(S(mem=102))
+        assert len(stats.steps) == 2 # collect_step done as usual
+
+
+    @pytest.mark.skip('flaky test')
     @pytest.mark.skipif(not IS_PYPY, reason='PyPy only test')
     def test_real_gc(self):
         import gc # real pypy GC

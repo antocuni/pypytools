@@ -1,5 +1,6 @@
 import sys
 import gc
+from contextlib import contextmanager
 from pypytools import IS_PYPY
 from pypytools.gc.multihook import GcHooks
 
@@ -48,13 +49,22 @@ class DefaultGc(CustomGc):
         self.major_in_progress = False
         self.threshold = 0
         self.update_threshold(0)
+        self.nogc_count = 0
 
     def update_threshold(self, mem):
         self.threshold = max(self.MIN_THRESHOLD,
                              min(mem * self.MAJOR_COLLECT,
                                  self.threshold * self.MAX_GROWTH))
 
+    @contextmanager
+    def nogc(self):
+        self.nogc_count += 1
+        yield self
+        self.nogc_count -= 1
+
     def on_gc_minor(self, stats):
+        if self.nogc_count > 0:
+            return
         if self.major_in_progress:
             step_stats = gc.collect_step()
             if step_stats.major_is_done:
