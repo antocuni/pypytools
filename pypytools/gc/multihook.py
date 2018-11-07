@@ -16,10 +16,10 @@ class GcHooks(object):
     on_gc_collect = None
 
     def enable(self):
-        MultiHook.get().add(self)
+        return MultiHook.get().add(self)
 
     def disable(self):
-        MultiHook.get().remove(self)
+        return MultiHook.get().remove(self)
 
 
 class MultiHook(object):
@@ -53,10 +53,12 @@ class MultiHook(object):
     def add(self, gchooks):
         self.hooks.append(gchooks)
         self._update_callbacks()
+        return True
 
     def remove(self, gchooks):
         self.hooks.remove(gchooks)
         self._update_callbacks()
+        return True
 
     def _check_other_hooks(self):
         # Safety check to avoid disabling other hooks by mistake: the only
@@ -116,9 +118,12 @@ class FakeMultiHook(object):
     """
     This is the fake class which is used on CPython. See MultiHook.__new__
     """
+
+    def is_working(self):
+        return False
     
     def add(self, gchooks):
-        pass
+        return False
 
     def remove(self, gchooks):
-        pass
+        return False

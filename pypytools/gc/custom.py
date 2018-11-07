@@ -22,16 +22,16 @@ class CustomGc(GcHooks):
     def enable(self):
         if self._isenabled:
             return
-        gc.disable()
         self._isenabled = True
-        super(CustomGc, self).enable()
+        if super(CustomGc, self).enable():
+            gc.disable()
 
     def disable(self):
         if not self._isenabled:
             return
-        gc.enable()
+        if super(CustomGc, self).disable():
+            gc.enable()
         self._isenabled = False
-        super(CustomGc, self).disable()
 
 
 

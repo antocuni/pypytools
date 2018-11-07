@@ -2,8 +2,7 @@ import pytest
 from pypytools import IS_PYPY
 from pypytools.gc.custom import CustomGc, DefaultGc
 from pypytools.gc.testing.test_fakegc import fakegc, FakeMinorStats
-from pypytools.gc.testing.test_multihook import GcStatistics
-
+from pypytools.gc.testing.test_multihook import GcStatistics, mh
 
 class TestCustomGc:
 
@@ -148,3 +147,13 @@ class TestDefaultGc:
         mygc.enable()
         allocate_some()
         assert len(stats.collects) >= 1
+
+    @pytest.mark.skipif(IS_PYPY, reason='CPython only test')
+    def test_dont_disable_on_CPython(self, mh):
+        import gc
+        # if we are on CPython, we want DefaultGc to do nothing. In
+        # particular, it should NOT disable the builtin GC (because else
+        # nobody is going to run finalizers)
+        mygc = DefaultGc()
+        mygc.enable()
+        assert gc.isenabled()

@@ -3,6 +3,14 @@ from pypytools import IS_PYPY
 from pypytools.gc.multihook import MultiHook, GcHooks
 from pypytools.gc.testing.test_fakegc import fakegc
 
+@pytest.fixture
+def mh(monkeypatch):
+    # install itself as MultiHook singleton, to avoid leaving around
+    # global state
+    obj = MultiHook()
+    monkeypatch.setattr(MultiHook, '_instance', obj)
+    return obj
+
 class GcStatistics(GcHooks):
     def __init__(self):
         self.reset()
@@ -96,14 +104,6 @@ class TestMultiHook:
 
 
 class TestGcHooks(object):
-
-    @pytest.fixture
-    def mh(self, monkeypatch):
-        # install itself as MultiHook singleton, to avoid leaving around
-        # global state
-        obj = MultiHook()
-        monkeypatch.setattr(MultiHook, '_instance', obj)
-        return obj
 
     def test_mh(self, fakegc, mh):
         assert MultiHook.get() is mh
