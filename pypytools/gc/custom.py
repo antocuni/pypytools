@@ -65,12 +65,23 @@ class DefaultGc(CustomGc):
     def on_gc_minor(self, stats):
         if self.nogc_count > 0:
             return
-        if self.major_in_progress:
-            step_stats = gc.collect_step()
-            if step_stats.major_is_done:
-                self.major_in_progress = False
-                self.update_threshold(stats.total_memory_used)
 
-        elif stats.total_memory_used > self.threshold:
-            self.major_in_progress = True
-            gc.collect_step()
+        # run the hook inside a nogc() section to avoid calling it
+        # recursively. Else, it happens the following:
+        #   1. a minor collection occurs, and we enter on_gc_minor
+        #   2. we reached the threshold and start a major
+        #   3. we call gc.collect_step
+        #   4. internally, pypy does ANOTHER minor collection
+        #   5. we enter AGAIN this hook
+        #   6. we are major_in_progress, so we call another gc.collect_step
+        #   7. and so on, until we finish the whole collection in one run :-(
+        with self.nogc():
+            if self.major_in_progress:
+                step_stats = gc.collect_step()
+                if step_stats.major_is_done:
+                    self.major_in_progress = False
+                    self.update_threshold(stats.total_memory_used)
+
+            elif stats.total_memory_used > self.threshold:
+                self.major_in_progress = True
+                gc.collect_step()

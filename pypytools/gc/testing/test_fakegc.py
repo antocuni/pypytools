@@ -37,12 +37,16 @@ class FakeGc(object):
     def collect_step(self):
         self._steps_to_major -= 1
         if self._steps_to_major == 0:
+            # in PyPy, the last gc.collect_step does not invoke any GC hook,
+            # because it runs the app-level finalizers
             self._steps_to_major = 3
-            stats = FakeCollectStepStats(major_is_done=True)
+            return FakeCollectStepStats(major_is_done=True)
         else:
             stats = FakeCollectStepStats(major_is_done=False)
-        self.fire_step(stats)
-        return stats
+            # in PyPy, gc.collect_step also does a minor collection, so the effect
+            self.fire_minor(FakeMinorStats(total_memory_used=42))
+            self.fire_step(stats)
+            return stats
 
     # these are not part of the gc API, but are used to simulate events
     def fire_minor(self, stats):
@@ -112,4 +116,4 @@ class TestFakeGc:
                 break
             assert n < 100, 'endless loop?'
         assert n == 3
-        assert len(steps) == 3
+        assert len(steps) == 2 # the last collect_step doesn't call the hook

@@ -82,12 +82,12 @@ class TestDefaultGc:
 
         fakegc.fire_minor(S(mem=103))
         assert not mygc.major_in_progress
-        assert len(stats.steps) == 3
+        assert len(stats.steps) == 2 # the last collect_step doesn't call the hook
         assert mygc.threshold == 206
 
         fakegc.fire_minor(S(mem=104))
         assert not mygc.major_in_progress
-        assert len(stats.steps) == 3 # no more steps
+        assert len(stats.steps) == 2 # no more steps
 
     def test_nogc(self, fakegc):
         class MyGc(DefaultGc):
