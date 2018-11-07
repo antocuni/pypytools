@@ -1,6 +1,7 @@
 """
 Improve PyPy's GC hooks and make it possible to have multiple callbacks
 """
+from pypytools import IS_PYPY
 import gc
 import types
 
@@ -36,6 +37,14 @@ class MultiHook(object):
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
+
+    def __new__(cls):
+        # some magic to make MultiHook not crashing on CPython. If we don't
+        # have gc.hook, MultiHook() returns an instance of FakeMultiHook
+        self = object.__new__(cls)
+        if not hasattr(gc, 'hooks'):
+            self.__class__ = FakeMultiHook
+        return self
 
     def __init__(self):
         self.hooks = [] # list of GcHooks instances
@@ -101,3 +110,15 @@ class MultiHook(object):
     def on_gc_collect(self, stats):
         for cb in self.collect_callbacks:
             cb(stats)
+
+
+class FakeMultiHook(object):
+    """
+    This is the fake class which is used on CPython. See MultiHook.__new__
+    """
+    
+    def add(self, gchooks):
+        pass
+
+    def remove(self, gchooks):
+        pass

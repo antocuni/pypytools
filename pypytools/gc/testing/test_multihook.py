@@ -128,14 +128,17 @@ class TestGcHooks(object):
         assert a1.minors == [1, 2]
         assert a2.minors == [2, 3]
 
-    @pytest.mark.skipif(not IS_PYPY, reason='PyPy only test')
     def test_real_hooks(self, mh):
-        # note that we are NOT using fakegc here
+        # note that:
+        #   1. we are NOT using fakegc, so MultiHook uses the builtin real gc mod
+        #   2. we run this test also on CPython. The point is that it should
+        #      still run without failing
         import gc
         a1 = GcStatistics()
         a2 = GcStatistics()
         a1.enable()
         a2.enable()
         gc.collect()
-        assert a1.collects[0].count >= 1
-        assert a2.collects[0].count >= 1
+        if IS_PYPY:
+            assert a1.collects[0].count >= 1
+            assert a2.collects[0].count >= 1
