@@ -7,13 +7,14 @@ desc = "A collection of useful tools to use PyPy-specific features, with CPython
 
 setup(
     name="pypytools",
-    version="0.6",
+    version="0.6.1",
     author="Antonio Cuni",
     author_email="anto.cuni@gmail.com",
     url="http://bitbucket.org/antocuni/pypytools/",
     license="MIT X11 style",
     description=desc,
-    packages=["pypytools", "pypytools.compat", "pypytools.gc"],
+    packages=["pypytools", "pypytools.compat", "pypytools.gc",
+              "pypytools.compat.micronumpy"],
     long_description=desc,
     install_requires=["py"],
 )
