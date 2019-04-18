@@ -13,9 +13,13 @@ euler_gamma = 0.577215664901532860606512090082402431 # from npy_math.h
 Inf = inf = infty = Infinity = PINF
 nan = NaN = NAN
 
-
 def asarray(a, dtype=None, order=None):
     return array(a, dtype, copy=False, order=order)
+
+def asanyarray(a, dtype=None, order=None):
+    if isinstance(a, ndarray):
+        return a
+    return asarray(a, dtype, order)
 
 def array_equal(a1, a2):
     try:
@@ -26,6 +30,11 @@ def array_equal(a1, a2):
         return False
     return bool(asarray(a1 == a2).all())
 
+def not_equal(a, b):
+    return asarray(a) != b
+
+def subtract(a, b):
+    return asarray(a) - b
 
 # generate wrappers for ndarray's methods
 def make_wrappers():

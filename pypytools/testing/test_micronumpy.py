@@ -128,3 +128,20 @@ class TestMicronumpy(object):
         assert eq(b, [[1, 4, 7],
                       [2, 5, 8],
                       [3, 6, 9]])
+
+    def test_diff(self):
+        u8_arr = unp.array([1, 0], dtype=unp.uint8)
+        assert eq(unp.diff(u8_arr), [255])
+        assert eq(u8_arr[1,...] - u8_arr[0,...], unp.array(255))
+
+        i16_arr = u8_arr.astype(unp.int16)
+        assert eq(unp.diff(i16_arr), [-1])
+
+        x = unp.array([1, 2, 4, 7, 0])
+        assert eq(unp.diff(x), [1, 2, 3, -7])
+        assert eq(unp.diff(x, n=2), [1, 1, -10])
+
+        x = unp.array([[1, 3, 6, 10], [0, 5, 6, 8]])
+        assert eq(unp.diff(x), [[2, 3, 4],
+                                [5, 1, 2]])
+        assert eq(unp.diff(x, axis=0), [[-1,  2,  0, -2]])

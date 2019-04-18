@@ -56,6 +56,8 @@ import pypytools
 if pypytools.IS_PYPY:
     IS_MICRONUMPY = True
     from pypytools.compat.micronumpy.core import *
+    from pypytools.compat.micronumpy.numerictypes import *
+    from pypytools.compat.micronumpy.function_base import *
 
 else:
     IS_MICRONUMPY = False
