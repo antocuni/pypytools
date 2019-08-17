@@ -111,6 +111,18 @@ class TestDefaultGc:
         fakegc.fire_minor(S(mem=102))
         assert len(stats.steps) == 2 # collect_step done as usual
 
+    def test_nogc_exception(self, fakegc):
+        class MyGc(DefaultGc):
+            pass
+
+        mygc = MyGc()
+        mygc.enable()
+        with pytest.raises(ValueError):
+            with mygc.nogc():
+                assert mygc.nogc_count == 1
+                raise ValueError()
+        assert mygc.nogc_count == 0
+
 
     @pytest.mark.skip('flaky test')
     @pytest.mark.skipif(not IS_PYPY, reason='PyPy only test')

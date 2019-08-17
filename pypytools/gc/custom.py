@@ -58,9 +58,11 @@ class DefaultGc(CustomGc):
 
     @contextmanager
     def nogc(self):
-        self.nogc_count += 1
-        yield self
-        self.nogc_count -= 1
+        try:
+            self.nogc_count += 1
+            yield self
+        finally:
+            self.nogc_count -= 1
 
     def on_gc_minor(self, stats):
         if self.nogc_count > 0:
