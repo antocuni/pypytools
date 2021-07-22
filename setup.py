@@ -10,7 +10,7 @@ setup(
     version="0.6.2",
     author="Antonio Cuni",
     author_email="anto.cuni@gmail.com",
-    url="http://bitbucket.org/antocuni/pypytools/",
+    url="https://github.com/antocuni/pypytools",
     license="MIT X11 style",
     description=desc,
     packages=["pypytools", "pypytools.compat", "pypytools.gc",
