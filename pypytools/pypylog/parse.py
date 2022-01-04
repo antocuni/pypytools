@@ -35,6 +35,11 @@ class BaseParser(object):
         #
         if log is None:
             log = model.PyPyLog()
+        try:
+        # Python 2: "basestring" is built-in
+            basestring
+        except NameError:
+            basestring = str
         if isinstance(fname, basestring):
             with open(fname) as f:
                 return parse_file(f)

@@ -2,6 +2,7 @@ import types
 from sys import version_info
 
 PY3 = version_info.major == 3
+PY3M = version_info.minor
 
 def clonefunc(f):
     """Deep clone the given function to create a new one.
@@ -22,6 +23,8 @@ def clonefunc(f):
             co.co_firstlineno, co.co_lnotab, co.co_freevars, co.co_cellvars]
     if PY3:
         args.insert(1, co.co_kwonlyargcount)
+    if PY3 and PY3M >= 8:
+        args.insert(1, co.co_posonlyargcount)
     co2 = types.CodeType(*args)
     #
     # then, we clone the function itself, using the new co2
