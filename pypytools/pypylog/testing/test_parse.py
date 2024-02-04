@@ -1,6 +1,13 @@
 import pytest
 import textwrap
-from cStringIO import StringIO
+
+from pypytools.util import PY3
+
+if PY3:
+    from io import StringIO
+else:
+    from cStringIO import StringIO
+
 from pypytools.pypylog import parse
 from pypytools.pypylog import model
 from pypytools.pypylog.model import Event, GcMinor, GcCollectStep
@@ -33,7 +40,11 @@ class TestFlatParser(object):
         [456] foo}
         [0ab] bar}
         """
-        pytest.raises(parse.ParseError, "self.parse(log)")
+        with pytest.raises(
+            parse.ParseError,
+            match=r'^End section does not match start: expected bar, got foo$',
+        ):
+            self.parse(log)
 
     def test_nested(self):
         log = self.parse("""
@@ -124,4 +135,5 @@ def test_parse_frequency():
     assert pf('40 KHz') == 40e3
     assert pf('40 MHz') == 40e6
     assert pf('40 GHz') == 40e9
-    pytest.raises(ValueError, "pf('')")
+    with pytest.raises(ValueError, match=r'^$'):
+        pf('')

@@ -1,7 +1,11 @@
-import itertools
 from collections import defaultdict
 import attr
 import numpy as np
+
+try:
+    from itertools import izip as zip
+except ImportError: # will be 3.x series
+    pass
 
 @attr.s
 class Event(object):
@@ -46,15 +50,15 @@ class GroupedPyPyLog(object):
 
     def print_summary(self):
         fmt = '%-28s %6s %8s'
-        print fmt % ('section', 'n', 'delta')
-        print '-'*44
+        print(fmt % ('section', 'n', 'delta'))
+        print('-'*44)
         for name, events in sorted(self.sections.iteritems()):
             total = 0
             for ev in events:
                 delta = ev.end - ev.start
                 assert delta >= 0
                 total += delta
-            print fmt % (name, len(events), format(delta, '.4f'))
+            print(fmt % (name, len(events), format(delta, '.4f')))
 
 class Series(object):
 
@@ -79,7 +83,7 @@ class Series(object):
         return len(self.X)
 
     def __iter__(self):
-        for x, y in itertools.izip(self.X, self.Y):
+        for x, y in zip(self.X, self.Y):
             yield x, y
 
     def __getitem__(self, i):
