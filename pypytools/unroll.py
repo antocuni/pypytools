@@ -81,8 +81,16 @@ class Unroller(ast.NodeTransformer):
         items = self.extravars[fornode.iter.id]
         body = []
         for i in range(len(items)):
+            if hasattr(ast, 'Num'):
+                val = ast.Num(n=i)
+            else:
+                val = ast.Constant(value=i)
+            if hasattr(ast, 'Index'):
+                slice = ast.Index(value=val)
+            else:
+                slice = val
             item = ast.Subscript(value=ast.Name(id=fornode.iter.id, ctx=ast.Load()),
-                                 slice=ast.Index(value=ast.Num(n=i)),
+                                 slice=slice,
                                  ctx=ast.Load())
             assign = ast.Assign(targets=[fornode.target],
                                 value=item)
